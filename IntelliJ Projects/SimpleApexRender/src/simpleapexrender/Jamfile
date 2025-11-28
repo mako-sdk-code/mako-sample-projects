@@ -1,0 +1,10 @@
+
+SubDir TOP swig java simpleapexrender src simpleapexrender ;
+
+SwigDistribFiles swig java $(TARGET_TOKEN) app simpleapexrender : 
+                [ FGristFilesLocal 
+                    ApexRenderParams.java 
+                    eRenderedFormat.java 
+                    SimpleApexRender.java 
+                ] : 
+                $(FILEMODE) ;

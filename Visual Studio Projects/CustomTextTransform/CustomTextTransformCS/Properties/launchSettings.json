@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CustomTextTransformCS": {
+      "commandName": "Project",
+      "commandLineArgs": "\"metadata-10ner.pdf\" \"output.pdf\" \"0.5\""
+    }
+  }
+}

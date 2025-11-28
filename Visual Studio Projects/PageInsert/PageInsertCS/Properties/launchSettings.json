@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PageInsertCS": {
+      "commandName": "Project",
+      "commandLineArgs": "\"000001_00001_00001.pdf\" \"output.pdf\" \"Cheshire Cat.pdf\""
+    }
+  }
+}

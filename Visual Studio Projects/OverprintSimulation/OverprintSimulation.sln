@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36327.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomSpotMergingCpp", "CustomSpotMergingCpp\CustomSpotMergingCpp.vcxproj", "{6CE11023-EE15-4763-97D5-8021052911EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomSpotMergingCS", "CustomSpotMergingCS\CustomSpotMergingCS.csproj", "{86177A25-DB13-4A99-9FDB-B0E858A48AEC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Debug|Any CPU.Build.0 = Debug|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Debug|x64.ActiveCfg = Debug|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Debug|x64.Build.0 = Debug|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Debug|x86.ActiveCfg = Debug|Win32
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Debug|x86.Build.0 = Debug|Win32
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Release|Any CPU.ActiveCfg = Release|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Release|Any CPU.Build.0 = Release|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Release|x64.ActiveCfg = Release|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Release|x64.Build.0 = Release|x64
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Release|x86.ActiveCfg = Release|Win32
+		{6CE11023-EE15-4763-97D5-8021052911EC}.Release|x86.Build.0 = Release|Win32
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Debug|x64.Build.0 = Debug|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Debug|x86.Build.0 = Debug|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Release|x64.ActiveCfg = Release|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Release|x64.Build.0 = Release|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Release|x86.ActiveCfg = Release|Any CPU
+		{86177A25-DB13-4A99-9FDB-B0E858A48AEC}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CF3EE5C9-46BD-4771-95EA-01EBEF1DA2F5}
+	EndGlobalSection
+EndGlobal

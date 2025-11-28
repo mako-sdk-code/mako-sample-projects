@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ILayoutExampleCS": {
+      "commandName": "Project",
+      "commandLineArgs": "\"Cheshire Cat.png\""
+    }
+  }
+}

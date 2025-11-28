@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "RenderSeparationsToFrameBuffersCS": {
+      "commandName": "Project",
+      "commandLineArgs": "\"Robots US Letter 1.pdf\" \"PANTONE Orange 021 C\" \"PANTONE Yellow C\" \"false\"",
+      "workingDirectory": "C:\\ggsource\\mako-support\\mako-sample-code\\Visual Studio Projects\\RenderSeparationsToFrameBuffers\\RenderSeparationsToFrameBuffersCS\\bin\\Debug\\net8.0"
+    }
+  }
+}
