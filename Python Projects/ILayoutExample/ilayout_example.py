@@ -109,6 +109,13 @@ def main():
 
         layout = ILayout.create(mako)
 
+        # layout.addFrame(ILayoutFrame.create(page.getCropBox(), ILayoutFrame.eVACenter))
+        # fixed_page.appendChild(layout.layout(
+        #     ILayoutTextRun.create("Danger Will Robinson",
+        #     ILayoutFont.create(mako, ILayoutFontWeight.create(ILayoutFontWeight.eBold, 0)), 200),
+        #     ILayoutParagraph.eHACenter
+        # ))
+
         draw_border = False
         margin = MM2XPS(12)
         width_with_margins = fixed_page.getWidth() - margin * 2

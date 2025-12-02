@@ -83,7 +83,9 @@ class CustomSpotMerge
                     fb,
                     0,                    // bandMemorySize (0 = no banding)
                     bounds,
-                    spotNames            // which spots to keep (all found)
+                    spotNames,            // which spots to keep (all found)
+                    IOptionalContent.Null(),
+                    eOptionalContentEvent.eOCEPrint // Non printable layers will be off
                 );
 
                 // ----- Create writer and image -----

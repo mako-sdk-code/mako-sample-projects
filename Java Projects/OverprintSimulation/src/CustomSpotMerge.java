@@ -87,7 +87,9 @@ public class CustomSpotMerge {
                         fb,
                         (short) 0,
                         bounds,
-                        spotNames
+                        spotNames,
+                        IOptionalContent.Null(),
+                        eOptionalContentEvent.eOCEPrint
                 );
 
                 // Create writer and image

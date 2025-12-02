@@ -16,7 +16,7 @@ using static JawsMako.jawsmakoIF_csharp;
 
 namespace RenderSeparationsToFrameBuffersCS
 {
-    internal class Program
+    internal class RenderSeparationsToFrameBuffers
     {
         static int Main(string[] args)
         {
@@ -181,7 +181,7 @@ namespace RenderSeparationsToFrameBuffersCS
                             IDOMTIFFImage.eTIFFPrediction.eTPNone,
                             eImageExtraChannelType.eIECNone,
                             /*tiled*/ false,
-                            IInputStream.createFromFile(mako, testFilepath + inputFile),
+                            IInputStream.createFromFile(mako, testFilepath + inputFile), 
                             IOutputStream.createToFile(mako, tiffFileName)
                         );
 

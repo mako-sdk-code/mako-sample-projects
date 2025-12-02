@@ -128,7 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="CustomTextTransform.cpp" />
     <ClCompile Include="TextTransformImplementation.cpp" />
   </ItemGroup>
   <ItemGroup>

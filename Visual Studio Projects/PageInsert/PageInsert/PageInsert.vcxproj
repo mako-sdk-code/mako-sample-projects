@@ -128,7 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PageInsert.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

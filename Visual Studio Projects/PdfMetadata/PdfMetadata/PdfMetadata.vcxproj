@@ -132,7 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PdfMetadata.cpp" />
     <ClCompile Include="xml\pugixml.cpp" />
   </ItemGroup>
   <ItemGroup>

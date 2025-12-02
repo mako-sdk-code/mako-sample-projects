@@ -18,7 +18,7 @@ using JawsMako;
 
 namespace MakoRecolorImageWithSpot;
 
-internal class Program
+internal class RecolorImageWithSpot
 {
     static int Main()
     {

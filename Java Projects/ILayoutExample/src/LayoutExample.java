@@ -26,7 +26,7 @@ public class LayoutExample
         {
             var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
-            IEDLClassFactory factory = mako.getFactory ();
+            IEDLClassFactory factory = mako.getFactory();
 
             // Get a page ready to accept some DOM
             var assembly = IDocumentAssembly.create(mako);
@@ -44,6 +44,13 @@ public class LayoutExample
             boolean drawBorder = false;
             var margin = MM2XPS(12);
             var widthWithMargins = fixedPage.getWidth() - margin * 2;
+
+//            layout.addFrame(ILayoutFrame.create(page.getCropBox(), ILayoutFrame.eVerticalAlignment.eVACenter));
+//            fixedPage.appendChild(layout.layout(
+//                    ILayoutTextRun.create("Danger Will Robinson!",
+//                    ILayoutFont.create(mako, ILayoutFontWeight.create(ILayoutFontWeight.eFontWeight.eBold.swigValue(), 0)), 200),
+//                    ILayoutParagraph.eHorizontalAlignment.eHACenter));
+
             AddFrame(mako, layout, fixedPage, new FRect(margin, margin, widthWithMargins, MM2XPS(40)), drawBorder);                                                // Banner
             AddFrame(mako, layout, fixedPage, new FRect(margin, margin + MM2XPS(40), widthWithMargins / 3 - MM2XPS(2), MM2XPS(83)), drawBorder);                   // Sidebar with 2mm right margin
             AddFrame(mako, layout, fixedPage, new FRect(margin + widthWithMargins / 3, margin + MM2XPS(40), widthWithMargins / 3 * 2, MM2XPS(83)), drawBorder);    // Pic
@@ -126,8 +133,8 @@ public class LayoutExample
 
             // Write PDF
             var output = IPDFOutput.create(mako);
-            output.setParameter("Producer", "Mako Layout Engine");
-            output.writeAssembly(assembly, "MyFirstLayout(Java).pdf");
+              output.setParameter("Producer", "Mako Layout Engine");
+              output.writeAssembly(assembly, "MyFirstLayout(Java).pdf");
 
             // Done
 

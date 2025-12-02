@@ -408,7 +408,7 @@ mako-gnu_linux-x64
 # Test Files
 *.pdf
 *.jpg
-*.tiff
+*.tif
 *.png
 *.ps
 *.icc
