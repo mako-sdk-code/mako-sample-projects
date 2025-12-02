@@ -130,7 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="RenderSeparationsToFrameBuffers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -419,6 +419,7 @@ mako-gnu_linux-x64
 *.iws
 *.jar
 *.dll
+*.class
 
 # Pycharm
 *.pyd
