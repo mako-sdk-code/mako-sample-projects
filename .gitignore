@@ -427,3 +427,6 @@ jawsmakoIF_python.py
 _pycache_
 .venv/
 
+# Testing 
+Testing/
+TestFiles/

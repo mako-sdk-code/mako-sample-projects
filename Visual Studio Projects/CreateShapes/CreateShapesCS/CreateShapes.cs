@@ -39,16 +39,6 @@ namespace SpotColorShapes
                 var yellow = IDOMSolidColorBrush.createSolidCmyk(mako, 0.0f, 0.0f, 1.0f, 0.0f);
                 var black = IDOMSolidColorBrush.createSolidCmyk(mako, 0.0f, 0.0f, 0.0f, 1.0f);
 
-                // Create some spot color brushes
-                var spotColorCyan = MakeSeparationColor(mako, "LABCyan", new double[] { 62.0, -44.0, -50.0 });
-                var spotColorMagenta = MakeSeparationColor(mako, "LABMagenta", new double[] { 52.0, 81.0, -7.0 });
-                var spotColorYellow = MakeSeparationColor(mako, "LABYellow", new double[] { 95.0, -6.0, 96.0 });
-                var spotColorBlack = MakeSeparationColor(mako, "LABBlack", new double[] { 12.0, 2.0, 0.0 });
-                var labCyan = IDOMSolidColorBrush.create(mako, spotColorCyan);
-                var labMagenta = IDOMSolidColorBrush.create(mako, spotColorMagenta);
-                var labYellow = IDOMSolidColorBrush.create(mako, spotColorYellow);
-                var labBlack = IDOMSolidColorBrush.create(mako, spotColorBlack);
-
                 // Create an 'All' spot color space, a color and a brush to draw with
                 var spotColorAll = MakeSeparationColor(mako, "All", new double[] { 1.0, 1.0, 1.0, 1.0 });
                 var all = IDOMSolidColorBrush.create(mako, spotColorAll);
@@ -65,19 +55,71 @@ namespace SpotColorShapes
                 var spotColorGrun = MakeSeparationColor(mako, "Grun", new double[] { 1.0, 0.0, 1.0, 0.0 });
                 var grun = IDOMSolidColorBrush.create(mako, spotColorGrun);
 
-                // Draw rows of shapes exactly as in C++ (stroke/fill pairs separated vertically)
-                var masterBoxSize = new FPoint(80, 80);
-                FPoint origin = new FPoint(140, 75);
+                // Create an LAB color brush
+                var spotColorBlack = MakeSeparationColor(mako, "LABBlack", new double[] { 0.0, 0.0, 0.0 });
+                var labBlack = IDOMSolidColorBrush.create(mako, spotColorBlack);
 
-                DrawRow(fixedPage, mako, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Box);
+                // Set box size and origin
+                var masterBoxSize = new FPoint(80, 80);
+                var boxSize = new FPoint(masterBoxSize);
+                var origin = new FPoint(80, 80);
+                var start = new FPoint(origin);
+
+                // Draw Cyan box
+                var box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), cyan));
+                start.x += boxSize.x;
+
+                // Draw Magenta box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), magenta));
+                start.x += boxSize.x;
+
+                // Draw Yellow box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), yellow));
+                start.x += boxSize.x;
+
+                // Draw Black box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), black));
+                start.x += boxSize.x;
+
+                // Draw Red box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), rot));
+                start.x += boxSize.x;
+
+                // Draw Green box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), grun));
+                start.x += boxSize.x;
+
+                // Draw Blue box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), blau));
+                start.x += boxSize.x;
+
+                // Draw Black box
+                box = new FRect(start.x, start.y, boxSize.x, boxSize.y);
+                fixedPage.appendChild(IDOMPathNode.createFilled(mako, IDOMPathGeometry.create(mako, box), labBlack));
+
+                // Draw a border in All
+                const uint strokeWidth = 20;
+                box = new FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 8) + strokeWidth, boxSize.y + strokeWidth);
+                fixedPage.appendChild(IDOMPathNode.createStroked(mako, IDOMPathGeometry.create(mako, box), all, new FMatrix(),
+                    IDOMPathGeometry.Null(), strokeWidth));
+
+                // Draw some other shapes below
+                origin.y += 160;
+
+                DrawRow(fixedPage, mako, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Ellipse);
                 origin.y += 200;
-                DrawRow(fixedPage, mako, origin, masterBoxSize, labCyan, labMagenta, labYellow, labBlack, ShapeType.Ellipse);
-                origin.y += 200;
-                DrawRow(fixedPage, mako, origin, masterBoxSize, rot, grun, blau, all, ShapeType.Hexagon);
+                DrawRow(fixedPage, mako, origin, masterBoxSize, rot, grun, blau, labBlack, ShapeType.Hexagon);
                 origin.y += 200;
                 DrawRow(fixedPage, mako, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Polygon, 8, 22.5);
                 origin.y += 200;
-                DrawRow(fixedPage, mako, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Target);
+                DrawRow(fixedPage, mako, origin, masterBoxSize, rot, grun, blau, labBlack, ShapeType.Target);
 
                 using var pdf = IPDFOutput.create(mako);
                 pdf.writeAssembly(assembly, "test.pdf");
@@ -115,8 +157,8 @@ namespace SpotColorShapes
                 page.appendChild(IDOMPathNode.createFilled(mako, fillGeom, brush));
 
                 // Move to next column and expand width like C++
-                start.x += boxSize.x * 1.1;
-                boxSize.x *= 1.25;
+                start.x += boxSize.x * 1.2;
+                boxSize.x *= 1.4;
             }
         }
 

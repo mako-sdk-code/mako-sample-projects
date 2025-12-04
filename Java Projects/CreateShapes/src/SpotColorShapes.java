@@ -37,45 +37,87 @@ public class SpotColorShapes {
             var yellow = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0f, 0.0f, 1.0f, 0.0f);
             var black = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0f, 0.0f, 0.0f, 1.0f);
 
-            // Create some spot color brushes
-            var spotColorCyan = makeSeparationColor(factory, "LABCyan", new double[] { 62.0, -44.0, -50.0 });
-            var spotColorMagenta = makeSeparationColor(factory, "LABMagenta", new double[] { 52.0, 81.0, -7.0 });
-            var spotColorYellow = makeSeparationColor(factory, "LABYellow", new double[] { 95.0, -6.0, 96.0 });
-            var spotColorBlack = makeSeparationColor(factory, "LABBlack", new double[] { 12.0, 2.0, 0.0 });
-            var labCyan = IDOMSolidColorBrush.create(factory, spotColorCyan);
-            var labMagenta = IDOMSolidColorBrush.create(factory, spotColorMagenta);
-            var labYellow = IDOMSolidColorBrush.create(factory, spotColorYellow);
-            var labBlack = IDOMSolidColorBrush.create(factory, spotColorBlack);
-
             // Create an 'All' spot color space, a color and a brush to draw with
             var spotColorAll = makeSeparationColor(factory, "All", new double[] { 1.0, 1.0, 1.0, 1.0 });
             var all = IDOMSolidColorBrush.create(factory, spotColorAll);
 
-            // Create a 'Rot' spot color
+            // Create a red spot color
             var spotColorRot = makeSeparationColor(factory, "Rot", new double[] { 0.0, 1.0, 1.0, 0.0 });
             var rot = IDOMSolidColorBrush.create(factory, spotColorRot);
 
-            // Create a 'Blau' spot color
-            var spotColorBlau = makeSeparationColor(factory, "Blau", new double[] { 1.0, 1.0, 0.0, 0.0 });
-            var blau = IDOMSolidColorBrush.create(factory, spotColorBlau);
-
-            // Create a 'Grun' spot color
+            // Create a green spot color
             var spotColorGrun = makeSeparationColor(factory, "Grun", new double[] { 1.0, 0.0, 1.0, 0.0 });
             var grun = IDOMSolidColorBrush.create(factory, spotColorGrun);
 
+            // Create a blue spot color
+            var spotColorBlau = makeSeparationColor(factory, "Blau", new double[] { 1.0, 1.0, 0.0, 0.0 });
+            var blau = IDOMSolidColorBrush.create(factory, spotColorBlau);
+
+            // Create an LAB spot color
+            var spotColorBlack = makeSeparationColor(factory, "LABBlack", new double[] { 0.0, 0.0, 0.0 });
+            var labBlack = IDOMSolidColorBrush.create(factory, spotColorBlack);
+
             // Draw rows of shapes
             FPoint masterBoxSize = new FPoint(80, 80);
-            FPoint origin = new FPoint(140, 75);
+            var boxSize = new FPoint(masterBoxSize);
+            var origin = new FPoint(80, 80);
+            var start = new FPoint(origin);
 
-            drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Box);
+            // Draw Cyan box
+            var box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), cyan));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Magenta box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), magenta));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Yellow box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), yellow));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Black box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), black));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Red box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), rot));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Green box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), grun));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Blue box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), blau));
+            start.setX(start.getX() + boxSize.getX());
+
+            // Draw Black box
+            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), labBlack));
+
+            // Draw a border in All
+            long strokeWidth = 20;
+            box = new FRect(origin.getX() - strokeWidth / 2.0, origin.getY() - strokeWidth / 2.0, (boxSize.getX() * 8) + strokeWidth, boxSize.getY() + strokeWidth);
+            fixedPage.appendChild(IDOMPathNode.createStroked(factory, IDOMPathGeometry.create(factory, box), all, new FMatrix(),
+                IDOMPathGeometry.Null(), strokeWidth));
+
+            // Draw some other shapes below
+            origin.setY(origin.getY() + 160);
+
+            drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Ellipse);
             origin.setY(origin.getY() + 200);
-            drawRow(fixedPage, factory, origin, masterBoxSize, labCyan, labMagenta, labYellow, labBlack, ShapeType.Ellipse);
-            origin.setY(origin.getY() + 200);
-            drawRow(fixedPage, factory, origin, masterBoxSize, rot, grun, blau, all, ShapeType.Hexagon);
+            drawRow(fixedPage, factory, origin, masterBoxSize, rot, grun, blau, labBlack, ShapeType.Hexagon);
             origin.setY(origin.getY() + 200);
             drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Polygon, 8, 22.5);
             origin.setY(origin.getY() + 200);
-            drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Target);
+            drawRow(fixedPage, factory, origin, masterBoxSize, rot, grun, blau, labBlack, ShapeType.Target);
 
             var pdf = IPDFOutput.create(mako);
             pdf.writeAssembly(assembly, "test.pdf");
@@ -108,8 +150,8 @@ public class SpotColorShapes {
             var fillGeom = createGeometry(factory, fillBox, type, sides, angle);
             page.appendChild(IDOMPathNode.createFilled(factory, fillGeom, brush));
 
-            start.setX(start.getX() + boxSize.getX() * 1.1);
-            boxSize.setX(boxSize.getX() * 1.25);
+            start.setX(start.getX() + boxSize.getX() * 1.2);
+            boxSize.setX(boxSize.getX() * 1.4);
         }
     }
 

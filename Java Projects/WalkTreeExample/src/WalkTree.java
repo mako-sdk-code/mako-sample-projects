@@ -11,6 +11,7 @@
  */
 
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
+import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class WalkTree
 {
@@ -27,6 +28,7 @@ public class WalkTree
             // Input
             IPDFInput pdfInput = IPDFInput.create(mako);
             IDocumentAssembly assembly = pdfInput.open(testFilepath + "Cheshire Cat.pdf");
+
             IDOMFixedPage inFixedPage = assembly.getDocument().getPage(0).getContent();
 
             // Define the callback and walk the tree

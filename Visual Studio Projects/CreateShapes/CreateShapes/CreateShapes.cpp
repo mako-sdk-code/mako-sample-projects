@@ -43,17 +43,7 @@ int main()
         const auto yellow = IDOMSolidColorBrush::createSolidCmyk(mako, 0.0, 0.0, 1.0, 0.0);
         const auto black = IDOMSolidColorBrush::createSolidCmyk(mako, 0.0, 0.0, 0.0, 1.0);
 
-        // Create some spot color brushes
-        const auto spotColorCyan = MakeSeparationColor(mako, "LABCyan", CDoubleVect{ 62.0, -44.0, -50.0 });
-        const auto spotColorMagenta = MakeSeparationColor(mako, "LABMagenta", CDoubleVect{ 52.0, 81.0, -7.0 });
-        const auto spotColorYellow = MakeSeparationColor(mako, "LABYellow", CDoubleVect{ 95.0, -6.0, 96.0 });
-        const auto spotColorBlack = MakeSeparationColor(mako, "LABBlack", CDoubleVect{ 12.0, 2.0, 0.0 });
-        const auto labCyan = IDOMSolidColorBrush::create(mako, spotColorCyan);
-        const auto labMagenta = IDOMSolidColorBrush::create(mako, spotColorMagenta);
-        const auto labYellow = IDOMSolidColorBrush::create(mako, spotColorYellow);
-        const auto labBlack = IDOMSolidColorBrush::create(mako, spotColorBlack);
-
-        // Create an 'All' spot color space, a color and a brush to draw with
+        // Create an 'All' spot color space and a brush to draw with
         const auto spotColorAll = MakeSeparationColor(mako, "All", CDoubleVect{ 1.0, 1.0, 1.0, 1.0 });
         const auto all = IDOMSolidColorBrush::create(mako, spotColorAll);
 
@@ -69,76 +59,95 @@ int main()
         const auto spotColorGrun = MakeSeparationColor(mako, "Grun", CDoubleVect{ 1.0, 0.0, 1.0, 0.0 });
         const auto grun = IDOMSolidColorBrush::create(mako, spotColorGrun);
 
+        // Create an LAB spot color
+        const auto spotColorBlack = MakeSeparationColor(mako, "LABBlack", CDoubleVect{ 0.0, 0.0, 0.0 });
+        const auto labBlack = IDOMSolidColorBrush::create(mako, spotColorBlack);
+
         // Draw some boxes
         const auto masterBoxSize = FPoint(80, 80);
         auto boxSize = masterBoxSize;
-        auto origin = FPoint(140, 75);
+        auto origin = FPoint(80, 80);
         auto start = origin;
 
         // Draw Cyan box
         auto box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), cyan));
-        box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), cyan));
+        start.x += boxSize.x;
 
         // Draw Magenta box
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), magenta));
-        box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), magenta));
+        start.x += boxSize.x;
 
         // Draw Yellow box
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), yellow));
-        box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), yellow));
+        start.x += boxSize.x;
 
         // Draw Black box
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), black));
-        box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), black));
+        start.x += boxSize.x;
 
-        // Draw some circles
+        // Draw Red box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y);
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), rot));
+        start.x += boxSize.x;
+
+        // Draw Green box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y);
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), grun));
+        start.x += boxSize.x;
+
+        // Draw Blue box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y);
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), blau));
+        start.x += boxSize.x;
+
+        // Draw Black box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y);
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), labBlack));
+        
+        // Draw a border in All
+        const uint32 strokeWidth = 20;
+        box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 8) + strokeWidth, boxSize.y + strokeWidth);
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), all, FMatrix(),
+            IDOMPathGeometryPtr(), strokeWidth));
+
+        // Draw some other shapes below
         boxSize = masterBoxSize;
-        origin.y += 200;
+        origin.y += 160;
         start = origin;
 
         // Draw Cyan circle
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), labCyan));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), cyan));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), labCyan));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), cyan));
 
         // Draw Magenta circle
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), labMagenta));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), magenta));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), labMagenta));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), magenta));
 
         // Draw Yellow circle
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), labYellow));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), yellow));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), labYellow));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), yellow));
 
         // Draw Black circle
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), labBlack));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), black));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), labBlack));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createEllipse(mako, box), black));
 
         // Draw some hexagons
         boxSize = masterBoxSize;
@@ -152,28 +161,28 @@ int main()
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), rot));
 
         // Draw Green hexagon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), grun));
         box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), grun));
 
         // Draw Blue hexagon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), blau));
         box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), blau));
 
-        // Draw "All" color hexagon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        // Draw "labBlack" color hexagon
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), all));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), labBlack));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), all));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), labBlack));
 
         // Draw some polygons
         auto sides = 8;
@@ -189,24 +198,24 @@ int main()
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), cyan));
 
         // Draw Magenta polygon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), magenta));
         box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), magenta));
 
         // Draw Yellow polygon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), yellow));
         box.y += boxSize.y * 1.1;
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), yellow));
 
         // Draw Black polygon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), black));
         box.y += boxSize.y * 1.1;
@@ -220,42 +229,42 @@ int main()
         origin.y += 200;
         start = origin;
 
-        // Draw Cyan polygon
+        // Draw Red polygon
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), cyan));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), rot));
         box.y += boxSize.y * 1.1;
         lines = 8;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), cyan));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), rot));
 
-        // Draw Magenta polygon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        // Draw Green polygon
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         lines = 4;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), magenta));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), grun));
         box.y += boxSize.y * 1.1;
         lines = 12;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), magenta));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), grun));
 
-        // Draw Yellow polygon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        // Draw Blue polygon
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         lines = 4;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), yellow));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), blau));
         box.y += boxSize.y * 1.1;
         lines = 8;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), yellow));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), blau));
 
-        // Draw Black polygon
-        start.x += boxSize.x * 1.1;
-        boxSize.x *= 1.25;
+        // Draw "labBlack" color polygon
+        start.x += boxSize.x * 1.2;
+        boxSize.x *= 1.4;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         lines = 3;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), black));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), labBlack));
         box.y += boxSize.y * 1.1;
         lines = 9;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), black));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), labBlack));
 
         IPDFOutput::create(mako)->writeAssembly(assembly, "test.pdf");
     }

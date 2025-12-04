@@ -43,46 +43,88 @@ def main():
         yellow = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0, 0.0, 1.0, 0.0)
         black = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0, 0.0, 0.0, 1.0)
 
-        # Create some spot color brushes
-        spotColorCyan = make_separation_color(factory, "LABCyan", [ 62.0, -44.0, -50.0] )
-        spotColorMagenta = make_separation_color(factory, "LABMagenta", [ 52.0, 81.0, -7.0 ])
-        spotColorYellow = make_separation_color(factory, "LABYellow", [ 95.0, -6.0, 96.0 ])
-        spotColorBlack = make_separation_color(factory, "LABBlack", [ 12.0, 2.0, 0.0 ])
-        labCyan = IDOMSolidColorBrush.create(factory, spotColorCyan)
-        labMagenta = IDOMSolidColorBrush.create(factory, spotColorMagenta)
-        labYellow = IDOMSolidColorBrush.create(factory, spotColorYellow)
-        labBlack = IDOMSolidColorBrush.create(factory, spotColorBlack)
-
          # Create an 'All' spot color space, a color and a brush to draw with
-        spotColorAll = make_separation_color(factory, "All", [ 1.0, 1.0, 1.0, 1.0 ])
-        all = IDOMSolidColorBrush.create(factory, spotColorAll)
+        spot_color_all = make_separation_color(factory, "All", [ 1.0, 1.0, 1.0, 1.0 ])
+        all = IDOMSolidColorBrush.create(factory, spot_color_all)
 
          # Create a 'Rot' spot color
-        spotColorRot = make_separation_color(factory, "Rot", [ 0.0, 1.0, 1.0, 0.0 ])
-        rot = IDOMSolidColorBrush.create(factory, spotColorRot)
+        spot_color_rot = make_separation_color(factory, "Rot", [ 0.0, 1.0, 1.0, 0.0 ])
+        rot = IDOMSolidColorBrush.create(factory, spot_color_rot)
 
          # Create a 'Blau' spot color
-        spotColorBlau = make_separation_color(factory, "Blau", [ 1.0, 1.0, 0.0, 0.0 ])
-        blau = IDOMSolidColorBrush.create(factory, spotColorBlau)
+        spot_color_blau = make_separation_color(factory, "Blau", [ 1.0, 1.0, 0.0, 0.0 ])
+        blau = IDOMSolidColorBrush.create(factory, spot_color_blau)
 
         # Create a 'Grun' spot color
-        spotColorGrun = make_separation_color(factory, "Grun", [ 1.0, 0.0, 1.0, 0.0 ])
-        grun = IDOMSolidColorBrush.create(factory, spotColorGrun)
+        spot_color_grun = make_separation_color(factory, "Grun", [ 1.0, 0.0, 1.0, 0.0 ])
+        grun = IDOMSolidColorBrush.create(factory, spot_color_grun)
+
+        # Create an LAB color brush
+        spot_color_black = make_separation_color(factory, "LABBlack", [12.0, 2.0, 0.0])
+        lab_black = IDOMSolidColorBrush.create(factory, spot_color_black)
 
         # Draw rows of shapes
         master_box_size = FPoint(80, 80)
-        origin = FPoint(140, 75)
+        boxSize = FPoint(master_box_size)
+        origin = FPoint(80, 80)
+        start = FPoint(origin)
 
-        draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black, ShapeType.Box)
+        # Draw Cyan box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), cyan))
+        start.x += boxSize.x
+
+        # Draw Magenta box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), magenta))
+        start.x += boxSize.x
+
+        # Draw Yellow box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), yellow))
+        start.x += boxSize.x
+
+        # Draw Black box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), black))
+        start.x += boxSize.x
+
+        # Draw Red box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), rot))
+        start.x += boxSize.x
+
+        # Draw Green box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), grun))
+        start.x += boxSize.x
+
+        # Draw Blue box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), blau))
+        start.x += boxSize.x
+
+        # Draw Black box
+        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), lab_black))
+
+        # Draw a border in All
+        strokeWidth = 20
+        box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 8) + strokeWidth, boxSize.y + strokeWidth)
+        fixed_page.appendChild(IDOMPathNode.createStroked(factory, IDOMPathGeometry.create(factory, box), all, FMatrix(),
+         IDOMPathGeometry.Null(), strokeWidth))
+
+        # Draw some other shapes below
+        origin.y += 160
+
+        draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black, ShapeType.Ellipse)
         origin.y += 200
-        draw_row(fixed_page, factory, origin, master_box_size, labCyan, labMagenta, labYellow, labBlack, ShapeType.Ellipse)
-        origin.y += 200
-        draw_row(fixed_page, factory, origin, master_box_size, rot, grun, blau, all, ShapeType.Hexagon)
+        draw_row(fixed_page, factory, origin, master_box_size, rot, grun, blau, lab_black, ShapeType.Hexagon)
         origin.y += 200
         draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black,
                  ShapeType.Polygon, sides=8, angle=22.5)
         origin.y += 200
-        draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black, ShapeType.Target)
+        draw_row(fixed_page, factory, origin, master_box_size, rot, grun, blau, lab_black, ShapeType.Target)
 
         # Write to PDF
         pdf = IPDFOutput.create(jaws_mako)
@@ -106,8 +148,8 @@ def draw_row(page, factory, origin, master_box_size, cyan, magenta, yellow, blac
         fill_geom = create_geometry(factory, fill_box, shape_type, sides, angle)
         page.appendChild(IDOMPathNode.createFilled(factory, fill_geom, brush))
 
-        start.x += box_size.x * 1.1
-        box_size.x *= 1.25
+        start.x += box_size.x * 1.2
+        box_size.x *= 1.4
 
 
 def create_geometry(factory, box, shape_type, sides, angle):

@@ -31,10 +31,10 @@ internal class WalkTree
             using var inFixedPage = assembly.getDocument().getPage()
                 .getContent();
 
-            //void VisitNodeHandler(IDOMNode node) => DumpNodeInfo(node);
-            //WalkTreeCallback callback = new NodeTreeCallbackDelegate(VisitNodeHandler);
+            void VisitNodeHandler(IDOMNode node) => DumpNodeInfo(node);
+            WalkTreeCallback callback = new NodeTreeCallbackDelegate(VisitNodeHandler);
 
-            WalkTreeCallback callback = new NodeTreeCallback();
+            //WalkTreeCallback callback = new NodeTreeCallback();
 
             inFixedPage.walkTree(callback.getCallbackFunc(), callback.getPriv(), false, true);
 
