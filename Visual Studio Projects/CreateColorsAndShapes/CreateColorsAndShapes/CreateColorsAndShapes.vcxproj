@@ -25,6 +25,7 @@
     <ProjectGuid>{0176142e-a9a9-4fa8-a238-b253d10ee9b0}</ProjectGuid>
     <RootNamespace>CreateShapes</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>CreateColorsAndShapes</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -136,7 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CreateShapes.cpp" />
+    <ClCompile Include="CreateColorsAndShapes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

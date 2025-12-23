@@ -21,7 +21,7 @@ using namespace EDL;
 
 IDOMPathGeometryPtr createHexagon(const IJawsMakoPtr& mako, FRect box, double rotation = 0);
 IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, FRect box, double nLines, double rotation);
-IDOMColorPtr MakeSeparationColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, IDOMColorSpacePtr alternateSpace = IDOMColorSpacePtr());
+IDOMColorPtr MakeDeviceNColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, IDOMColorSpacePtr alternateSpace);
 
 int main()
 {
@@ -43,30 +43,40 @@ int main()
         const auto yellow = IDOMSolidColorBrush::createSolidCmyk(mako, 0.0, 0.0, 1.0, 0.0);
         const auto black = IDOMSolidColorBrush::createSolidCmyk(mako, 0.0, 0.0, 0.0, 1.0);
 
-        // Create an 'All' spot color space and a brush to draw with
-        const auto spotColorAll = MakeSeparationColor(mako, "All", CDoubleVect{ 1.0, 1.0, 1.0, 1.0 });
-        const auto all = IDOMSolidColorBrush::create(mako, spotColorAll);
+        // Create some spot color brushes with types LAB, ICCBased and DeviceN
 
-        // Create a 'Rot' spot color
-        const auto spotColorRot = MakeSeparationColor(mako, "Rot", CDoubleVect{ 0.0, 1.0, 1.0, 0.0 });
-        const auto rot = IDOMSolidColorBrush::create(mako, spotColorRot);
+        // Create an LAB colorspace with D65 white point and -128 to 127 ranges for a and b values
+        const auto labColorSpace = IDOMColorSpaceLAB::create(mako, 0.9504f, 1.0f, 1.0888f, 0.0, 0.0, 0.0, -128, 127, -128, 127);
 
-        // Create a 'Blau' spot color
-        const auto spotColorBlau = MakeSeparationColor(mako, "Blau", CDoubleVect{ 1.0, 1.0, 0.0, 0.0 });
-        const auto blau = IDOMSolidColorBrush::create(mako, spotColorBlau);
+        // Create a device CMYK colorspace from an ICC profile
+        const auto iccBasedColorSpace = IDOMColorSpaceICCBased::create(
+             mako, IDOMICCProfile::create(
+                mako, IInputStream::createFromFile(
+                    mako, R"(C:\Windows\System32\spool\drivers\color\WebCoatedFOGRA28.icc)")));
+        
+        // Create an LAB color
+        const auto pantoneBlue072C_lab = IDOMColor::create(mako, labColorSpace, 1.0, 17.64, 43.0, -76.0);
 
-        // Create a 'Grun' spot color
-        const auto spotColorGrun = MakeSeparationColor(mako, "Grun", CDoubleVect{ 1.0, 0.0, 1.0, 0.0 });
-        const auto grun = IDOMSolidColorBrush::create(mako, spotColorGrun);
+        // Make a copy and convert to ICC space
+        auto pantoneBlue072C_fogra = clone(pantoneBlue072C_lab, mako);
+        pantoneBlue072C_fogra->setColorSpace(iccBasedColorSpace, eRelativeColorimetric, eBPCDefault, mako);
 
-        // Create an LAB spot color
-        const auto spotColorBlack = MakeSeparationColor(mako, "LABBlack", CDoubleVect{ 0.0, 0.0, 0.0 });
-        const auto labBlack = IDOMSolidColorBrush::create(mako, spotColorBlack);
+        // Create a DeviceN color
+        const auto pantoneBlue072C_spot = MakeDeviceNColor(mako, "PANTONE BLUE 072 C", CDoubleVect{ 17.64, 43.0, -76.0 }, labColorSpace);
+
+        // Create an All spot color
+        const auto allColor = MakeDeviceNColor(mako, "All", CDoubleVect{ 1.0, 1.0, 1.0, 1.0 }, IDOMColorSpaceDeviceCMYK::create(mako));
+
+        // Create spot color brushes
+        const auto labBrush = IDOMSolidColorBrush::create(mako, pantoneBlue072C_lab);
+        const auto iccBrush = IDOMSolidColorBrush::create(mako, pantoneBlue072C_fogra);
+        const auto deviceNBrush = IDOMSolidColorBrush::create(mako, pantoneBlue072C_spot);
+        const auto allBrush = IDOMSolidColorBrush::create(mako, allColor);
 
         // Draw some boxes
-        const auto masterBoxSize = FPoint(80, 80);
+        const auto masterBoxSize = FPoint(90, 90);
         auto boxSize = masterBoxSize;
-        auto origin = FPoint(80, 80);
+        auto origin = FPoint(85, 85);
         auto start = origin;
 
         // Draw Cyan box
@@ -89,34 +99,30 @@ int main()
         fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), black));
         start.x += boxSize.x;
 
-        // Draw Red box
+        // Draw LAB box 
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), rot));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), labBrush));
         start.x += boxSize.x;
 
-        // Draw Green box
+        // Draw ICC box
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), grun));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), iccBrush));
         start.x += boxSize.x;
 
-        // Draw Blue box
+        // Draw DeviceN box
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), blau));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), deviceNBrush));
         start.x += boxSize.x;
-
-        // Draw Black box
-        box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, IDOMPathGeometry::create(mako, box), labBlack));
         
         // Draw a border in All
         const uint32 strokeWidth = 20;
-        box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 8) + strokeWidth, boxSize.y + strokeWidth);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), all, FMatrix(),
+        box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 7) + strokeWidth, boxSize.y + strokeWidth);
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), allBrush, FMatrix(),
             IDOMPathGeometryPtr(), strokeWidth));
 
         // Draw some other shapes below
         boxSize = masterBoxSize;
-        origin.y += 160;
+        origin.y += 180;
         start = origin;
 
         // Draw Cyan circle
@@ -127,7 +133,7 @@ int main()
 
         // Draw Magenta circle
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), magenta));
         box.y += boxSize.y * 1.1;
@@ -135,7 +141,7 @@ int main()
 
         // Draw Yellow circle
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), yellow));
         box.y += boxSize.y * 1.1;
@@ -143,7 +149,7 @@ int main()
 
         // Draw Black circle
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createEllipse(mako, box), black));
         box.y += boxSize.y * 1.1;
@@ -154,35 +160,35 @@ int main()
         origin.y += 200;
         start = origin;
 
-        // Draw Red hexagon
+        // Draw LAB hexagon
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), rot));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), labBrush));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), rot));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), labBrush));
 
-        // Draw Green hexagon
+        // Draw ICC hexagon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), grun));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), iccBrush));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), grun));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), iccBrush));
 
-        // Draw Blue hexagon
+        // Draw DeviceN hexagon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), blau));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), deviceNBrush));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), blau));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), deviceNBrush));
 
-        // Draw "labBlack" color hexagon
+        // Draw All color hexagon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), labBlack));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createHexagon(mako, box), allBrush));
         box.y += boxSize.y * 1.1;
-        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), labBlack));
+        fixedPage->appendChild(IDOMPathNode::createFilled(mako, createHexagon(mako, box), allBrush));
 
         // Draw some polygons
         auto sides = 8;
@@ -199,7 +205,7 @@ int main()
 
         // Draw Magenta polygon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), magenta));
         box.y += boxSize.y * 1.1;
@@ -207,7 +213,7 @@ int main()
 
         // Draw Yellow polygon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), yellow));
         box.y += boxSize.y * 1.1;
@@ -215,7 +221,7 @@ int main()
 
         // Draw Black polygon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::createPolygon(mako, box, sides, angle), black));
         box.y += boxSize.y * 1.1;
@@ -223,48 +229,44 @@ int main()
 
         // ----- Draw some targets -----
         
-        auto lines = 9;
+        auto lines = 3;
         angle = 0.0;
         boxSize = masterBoxSize;
         origin.y += 200;
         start = origin;
 
-        // Draw Red polygon
+        // Draw LAB polygon
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), rot));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), labBrush));
         box.y += boxSize.y * 1.1;
-        lines = 8;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), rot));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines + 4, angle), labBrush));
 
-        // Draw Green polygon
+        // Draw ICC polygon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        lines = 4;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), grun));
+        lines += 1;
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), iccBrush));
         box.y += boxSize.y * 1.1;
-        lines = 12;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), grun));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines + 4, angle), iccBrush));
 
-        // Draw Blue polygon
+        // Draw DeviceN polygon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        lines = 4;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), blau));
+        lines += 1;
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), deviceNBrush));
         box.y += boxSize.y * 1.1;
-        lines = 8;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), blau));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines + 4, angle), deviceNBrush));
 
-        // Draw "labBlack" color polygon
+        // Draw All color polygon
         start.x += boxSize.x * 1.2;
-        boxSize.x *= 1.4;
+        boxSize.x *= 1.3;
         box = FRect(start.x, start.y, boxSize.x, boxSize.y);
-        lines = 3;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), labBlack));
+        lines += 1;
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), allBrush));
         box.y += boxSize.y * 1.1;
-        lines = 9;
-        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines, angle), labBlack));
+        fixedPage->appendChild(IDOMPathNode::createStroked(mako, createTarget(mako, box, lines + 4, angle), allBrush));
 
         IPDFOutput::create(mako)->writeAssembly(assembly, "test.pdf");
     }
@@ -315,36 +317,12 @@ IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, FRect box, double nLi
     return geometryBuilder->createGeometry(mako, IDOMPathGeometry::eFRNonZero);
 }
 
-// Create a new DeviceN color space with the given name and one colorant
-IDOMColorPtr MakeSeparationColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, IDOMColorSpacePtr alternateSpace)
+IDOMColorPtr MakeDeviceNColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, IDOMColorSpacePtr alternateSpace)
 {
     // Create a vector of colorants with one entry
     auto colorants = IDOMColorSpaceDeviceN::CColorantInfoVect();
-
-    if (representation.size() == 3)
-    {
-        const auto colorantInfo = IDOMColorSpaceDeviceN::CColorantInfo(
-            name, { representation[0], representation[1], representation[2] }
-        );
-        colorants.append(colorantInfo);
-
-        if (!alternateSpace)
-            alternateSpace = IDOMColorSpaceLAB::create(mako, 0.9642f, 1.0000f, 0.8249f, 0.0f, 0.0f, 0.0f, -128.0f, 127.0f,
-                -128.0f, 127.0f);
-    }
-    else if (representation.size() == 4)
-    {
-        const auto colorantInfo = IDOMColorSpaceDeviceN::CColorantInfo(
-            name, { representation[0], representation[1], representation[2], representation[3]}
-        );
-        colorants.append(colorantInfo);
-
-        if (!alternateSpace)
-            alternateSpace = IDOMColorSpaceDeviceCMYK::create(mako);
-    }
-
-    if (colorants.empty())
-        return IDOMColorPtr();
+    const auto colorantInfo = IDOMColorSpaceDeviceN::CColorantInfo(name, representation);
+    colorants.append(colorantInfo);
 
     // Create the DeviceN space
     const auto colorSpace = IDOMColorSpaceDeviceN::create(mako, colorants, alternateSpace);

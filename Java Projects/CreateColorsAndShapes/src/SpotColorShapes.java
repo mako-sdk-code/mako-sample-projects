@@ -37,30 +37,40 @@ public class SpotColorShapes {
             var yellow = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0f, 0.0f, 1.0f, 0.0f);
             var black = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0f, 0.0f, 0.0f, 1.0f);
 
-            // Create an 'All' spot color space, a color and a brush to draw with
-            var spotColorAll = makeSeparationColor(factory, "All", new double[] { 1.0, 1.0, 1.0, 1.0 });
-            var all = IDOMSolidColorBrush.create(factory, spotColorAll);
+            // Create some spot color brushes with types LAB, ICCBased and DeviceN
 
-            // Create a red spot color
-            var spotColorRot = makeSeparationColor(factory, "Rot", new double[] { 0.0, 1.0, 1.0, 0.0 });
-            var rot = IDOMSolidColorBrush.create(factory, spotColorRot);
+            // Create an LAB colorspace with D65 white point and -128 to 127 ranges for a and b values
+            var labColorSpace = IDOMColorSpaceLAB.create(factory, 0.9504f, 1.0f, 1.0888f, 0.0f, 0.0f, 0.0f, -128, 127, -128, 127);
 
-            // Create a green spot color
-            var spotColorGrun = makeSeparationColor(factory, "Grun", new double[] { 1.0, 0.0, 1.0, 0.0 });
-            var grun = IDOMSolidColorBrush.create(factory, spotColorGrun);
+            // Create a device CMYK colorspace from an ICC profile
+            var iccBasedColorSpace = IDOMColorSpaceICCBased.create(
+                factory, IDOMICCProfile.create(
+                    factory, IInputStream.createFromFile(
+                        factory, "C:\\Windows\\System32\\spool\\drivers\\color\\WebCoatedFOGRA28.icc")));
 
-            // Create a blue spot color
-            var spotColorBlau = makeSeparationColor(factory, "Blau", new double[] { 1.0, 1.0, 0.0, 0.0 });
-            var blau = IDOMSolidColorBrush.create(factory, spotColorBlau);
+            // Create a LAB color
+            var pantoneBlue072C_lab = IDOMColor.create(factory, labColorSpace, 1.0, 17.64, 43.0, -76.0);
 
-            // Create an LAB spot color
-            var spotColorBlack = makeSeparationColor(factory, "LABBlack", new double[] { 0.0, 0.0, 0.0 });
-            var labBlack = IDOMSolidColorBrush.create(factory, spotColorBlack);
+            // Make a copy and convert to ICC space
+            IDOMColor pantoneBlue072C_fogra = IDOMColor.fromRCObject(pantoneBlue072C_lab.clone(factory));
+            pantoneBlue072C_fogra.setColorSpace(iccBasedColorSpace, eRenderingIntent.eRelativeColorimetric, eBlackPointCompensation.eBPCDefault, factory);
+
+            // Create a DeviceN color
+            var pantoneBlue072C_spot = MakeDeviceNColor(factory, "PANTONE BLUE 072 C", new CEDLVectDouble(new double[] { 17.64, 43.0, -76.0 }), labColorSpace);
+
+            // Create an All spot color
+            var allColor = MakeDeviceNColor(factory, "All", new CEDLVectDouble(new double[] { 1.0, 1.0, 1.0, 1.0 }), IDOMColorSpaceDeviceCMYK.create(factory));
+
+            // Create spot color brushes
+            var labBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_lab);
+            var iccBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_fogra);
+            var deviceNBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_spot);
+            var allBrush = IDOMSolidColorBrush.create(factory, allColor);
 
             // Draw rows of shapes
-            FPoint masterBoxSize = new FPoint(80, 80);
+            FPoint masterBoxSize = new FPoint(90, 90);
             var boxSize = new FPoint(masterBoxSize);
-            var origin = new FPoint(80, 80);
+            var origin = new FPoint(85, 85);
             var start = new FPoint(origin);
 
             // Draw Cyan box
@@ -83,41 +93,37 @@ public class SpotColorShapes {
             fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), black));
             start.setX(start.getX() + boxSize.getX());
 
-            // Draw Red box
+            // Draw LAB box
             box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
-            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), rot));
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), labBrush));
             start.setX(start.getX() + boxSize.getX());
 
-            // Draw Green box
+            // Draw ICC box
             box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
-            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), grun));
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), iccBrush));
             start.setX(start.getX() + boxSize.getX());
 
-            // Draw Blue box
+            // Draw DeviceN box
             box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
-            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), blau));
+            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), deviceNBrush));
             start.setX(start.getX() + boxSize.getX());
-
-            // Draw Black box
-            box = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
-            fixedPage.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), labBlack));
 
             // Draw a border in All
             long strokeWidth = 20;
-            box = new FRect(origin.getX() - strokeWidth / 2.0, origin.getY() - strokeWidth / 2.0, (boxSize.getX() * 8) + strokeWidth, boxSize.getY() + strokeWidth);
-            fixedPage.appendChild(IDOMPathNode.createStroked(factory, IDOMPathGeometry.create(factory, box), all, new FMatrix(),
+            box = new FRect(origin.getX() - strokeWidth / 2.0, origin.getY() - strokeWidth / 2.0, (boxSize.getX() * 7) + strokeWidth, boxSize.getY() + strokeWidth);
+            fixedPage.appendChild(IDOMPathNode.createStroked(factory, IDOMPathGeometry.create(factory, box), allBrush, new FMatrix(),
                 IDOMPathGeometry.Null(), strokeWidth));
 
             // Draw some other shapes below
-            origin.setY(origin.getY() + 160);
+            origin.setY(origin.getY() + 180);
 
             drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Ellipse);
             origin.setY(origin.getY() + 200);
-            drawRow(fixedPage, factory, origin, masterBoxSize, rot, grun, blau, labBlack, ShapeType.Hexagon);
+            drawRow(fixedPage, factory, origin, masterBoxSize, labBrush, iccBrush, deviceNBrush, allBrush, ShapeType.Hexagon);
             origin.setY(origin.getY() + 200);
-            drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Polygon, 8, 22.5);
+            drawRow(fixedPage, factory, origin, masterBoxSize, cyan, magenta, yellow, black, ShapeType.Polygon, 8, 22.5, 0);
             origin.setY(origin.getY() + 200);
-            drawRow(fixedPage, factory, origin, masterBoxSize, rot, grun, blau, labBlack, ShapeType.Target);
+            drawRow(fixedPage, factory, origin, masterBoxSize, labBrush, iccBrush, deviceNBrush, allBrush, ShapeType.Target, 0, 0.0, 3);
 
             var pdf = IPDFOutput.create(mako);
             pdf.writeAssembly(assembly, "test.pdf");
@@ -130,12 +136,12 @@ public class SpotColorShapes {
     static void drawRow(IDOMFixedPage page, IEDLClassFactory factory, FPoint origin, FPoint masterBoxSize,
                         IDOMBrush cyan, IDOMBrush magenta, IDOMBrush yellow, IDOMBrush black,
                         ShapeType type) {
-        drawRow(page, factory, origin, masterBoxSize, cyan, magenta, yellow, black, type, 0, 0.0);
+        drawRow(page, factory, origin, masterBoxSize, cyan, magenta, yellow, black, type, 0, 0.0, 3);
     }
 
     static void drawRow(IDOMFixedPage page, IEDLClassFactory factory, FPoint origin, FPoint masterBoxSize,
                         IDOMBrush cyan, IDOMBrush magenta, IDOMBrush yellow, IDOMBrush black,
-                        ShapeType type, int sides, double angle) {
+                        ShapeType type, int sides, double angle, int lines) {
 
         IDOMBrush[] brushes = new IDOMBrush[]{cyan, magenta, yellow, black};
         FPoint boxSize = new FPoint(masterBoxSize.getX(), masterBoxSize.getY());
@@ -143,19 +149,21 @@ public class SpotColorShapes {
 
         for (IDOMBrush brush : brushes) {
             FRect strokeBox = new FRect(start.getX(), start.getY(), boxSize.getX(), boxSize.getY());
-            var strokeGeom = createGeometry(factory, strokeBox, type, sides, angle);
+            var strokeGeom = createGeometry(factory, strokeBox, type, sides, angle, lines);
             page.appendChild(IDOMPathNode.createStroked(factory, strokeGeom, brush));
 
             FRect fillBox = new FRect(strokeBox.getX(), strokeBox.getY() + boxSize.getY() * 1.1, boxSize.getX(), boxSize.getY());
-            var fillGeom = createGeometry(factory, fillBox, type, sides, angle);
+            var fillGeom = createGeometry(factory, fillBox, type, sides, angle, lines + 4);
             page.appendChild(IDOMPathNode.createFilled(factory, fillGeom, brush));
 
             start.setX(start.getX() + boxSize.getX() * 1.2);
-            boxSize.setX(boxSize.getX() * 1.4);
+            boxSize.setX(boxSize.getX() * 1.3);
+
+            lines += 1;
         }
     }
 
-    static IDOMPathGeometry createGeometry(IEDLClassFactory factory, FRect box, ShapeType type, int sides, double angle) {
+    static IDOMPathGeometry createGeometry(IEDLClassFactory factory, FRect box, ShapeType type, int sides, double angle, int lines) {
         switch (type) {
             case Ellipse:
                 return IDOMPathGeometry.createEllipse(factory, box);
@@ -164,7 +172,7 @@ public class SpotColorShapes {
             case Polygon:
                 return IDOMPathGeometry.createPolygon(factory, box, (short)sides, angle);
             case Target:
-                return createTarget(factory, box, 8, angle);
+                return createTarget(factory, box, lines, angle);
             default:
                 return IDOMPathGeometry.create(factory, box);
         }
@@ -194,15 +202,17 @@ public class SpotColorShapes {
         return builder.createGeometry(factory, IDOMPathGeometry.eFillRule.eFRNonZero);
     }
 
-    static IDOMColor makeSeparationColor(IEDLClassFactory factory, String name, double[] representation) {
-        var colorant = new IDOMColorSpaceDeviceN.CColorantInfo(name, new CEDLVectDouble(representation));
+    static IDOMColor MakeDeviceNColor(IEDLClassFactory factory, String name, CEDLVectDouble representation, IDOMColorSpace alternate) {
+
+        // Create a vector of colorants with one entry
         var colorants = new CEDLVectColorantInfo();
+        var colorant = new IDOMColorSpaceDeviceN.CColorantInfo(name, representation);
         colorants.append(colorant);
 
-        var alternate = representation.length == 3 ? IDOMColorSpaceLAB.create(factory, 0.9642f, 1.0f, 0.8249f,
-                0.0f, 0.0f, 0.0f, -128.0f, 127.0f, -128.0f, 127.0f) : IDOMColorSpaceDeviceCMYK.create(factory);
-
+        // Create the DeviceN space
         var colorSpace = IDOMColorSpaceDeviceN.create(factory, colorants, alternate);
+
+        // Return the new spot color
         return IDOMColor.create(factory, colorSpace, 1.0, 1.0);
     }
 }

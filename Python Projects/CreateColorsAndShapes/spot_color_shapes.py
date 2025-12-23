@@ -43,30 +43,40 @@ def main():
         yellow = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0, 0.0, 1.0, 0.0)
         black = IDOMSolidColorBrush.createSolidCmyk(factory, 0.0, 0.0, 0.0, 1.0)
 
-         # Create an 'All' spot color space, a color and a brush to draw with
-        spot_color_all = make_separation_color(factory, "All", [ 1.0, 1.0, 1.0, 1.0 ])
-        all = IDOMSolidColorBrush.create(factory, spot_color_all)
+        # Create some spot color brushes with types LAB, ICCBased and DeviceN
 
-         # Create a 'Rot' spot color
-        spot_color_rot = make_separation_color(factory, "Rot", [ 0.0, 1.0, 1.0, 0.0 ])
-        rot = IDOMSolidColorBrush.create(factory, spot_color_rot)
+        # Create an LAB colorspace with D65 white point and -128 to 127 ranges for a and b values
+        labColorSpace = IDOMColorSpaceLAB.create(factory, 0.9504, 1.0, 1.0888, 0.0, 0.0, 0.0, -128, 127, -128, 127)
 
-         # Create a 'Blau' spot color
-        spot_color_blau = make_separation_color(factory, "Blau", [ 1.0, 1.0, 0.0, 0.0 ])
-        blau = IDOMSolidColorBrush.create(factory, spot_color_blau)
+        # Create a device CMYK colorspace from an ICC profile
+        iccBasedColorSpace = IDOMColorSpaceICCBased.create(
+            factory, IDOMICCProfile.create(
+                factory, IInputStream.createFromFile(
+                    factory, "C:\\Windows\\System32\\spool\\drivers\\color\\WebCoatedFOGRA28.icc")))
 
-        # Create a 'Grun' spot color
-        spot_color_grun = make_separation_color(factory, "Grun", [ 1.0, 0.0, 1.0, 0.0 ])
-        grun = IDOMSolidColorBrush.create(factory, spot_color_grun)
+        # Create a LAB color
+        pantoneBlue072C_lab = IDOMColor.create(factory, labColorSpace, 1.0, 17.64, 43.0, -76.0)
 
-        # Create an LAB color brush
-        spot_color_black = make_separation_color(factory, "LABBlack", [12.0, 2.0, 0.0])
-        lab_black = IDOMSolidColorBrush.create(factory, spot_color_black)
+        # Make a copy and convert to ICC space
+        pantoneBlue072C_fogra = IDOMColor.fromRCObject(pantoneBlue072C_lab.clone(factory))
+        pantoneBlue072C_fogra.setColorSpace(iccBasedColorSpace, eRelativeColorimetric, eBPCDefault, factory)
+
+        # Create a DeviceN color
+        pantoneBlue072C_spot = make_deviceN_color(factory, "PANTONE BLUE 072 C", CEDLVectDouble({ 17.64, 43.0, -76.0 }), labColorSpace)
+
+        # Create an All spot color
+        allColor = make_deviceN_color(factory, "All", CEDLVectDouble({ 1.0, 1.0, 1.0, 1.0 }), IDOMColorSpaceDeviceCMYK.create(factory))
+
+        # Create spot color brushes
+        labBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_lab)
+        iccBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_fogra)
+        deviceNBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_spot)
+        allBrush = IDOMSolidColorBrush.create(factory, allColor)
 
         # Draw rows of shapes
-        master_box_size = FPoint(80, 80)
+        master_box_size = FPoint(90, 90)
         boxSize = FPoint(master_box_size)
-        origin = FPoint(80, 80)
+        origin = FPoint(85, 85)
         start = FPoint(origin)
 
         # Draw Cyan box
@@ -89,29 +99,29 @@ def main():
         fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), black))
         start.x += boxSize.x
 
-        # Draw Red box
+        # Draw LAB box
         box = FRect(start.x, start.y, boxSize.x, boxSize.y)
-        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), rot))
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), labBrush))
         start.x += boxSize.x
 
-        # Draw Green box
+        # Draw ICC box
         box = FRect(start.x, start.y, boxSize.x, boxSize.y)
-        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), grun))
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), iccBrush))
         start.x += boxSize.x
 
-        # Draw Blue box
+        # Draw DeviceN box
         box = FRect(start.x, start.y, boxSize.x, boxSize.y)
-        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), blau))
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), deviceNBrush))
         start.x += boxSize.x
 
-        # Draw Black box
+        # Draw All box
         box = FRect(start.x, start.y, boxSize.x, boxSize.y)
-        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), lab_black))
+        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), allBrush))
 
         # Draw a border in All
         strokeWidth = 20
-        box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 8) + strokeWidth, boxSize.y + strokeWidth)
-        fixed_page.appendChild(IDOMPathNode.createStroked(factory, IDOMPathGeometry.create(factory, box), all, FMatrix(),
+        box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 7) + strokeWidth, boxSize.y + strokeWidth)
+        fixed_page.appendChild(IDOMPathNode.createStroked(factory, IDOMPathGeometry.create(factory, box), allBrush, FMatrix(),
          IDOMPathGeometry.Null(), strokeWidth))
 
         # Draw some other shapes below
@@ -119,12 +129,12 @@ def main():
 
         draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black, ShapeType.Ellipse)
         origin.y += 200
-        draw_row(fixed_page, factory, origin, master_box_size, rot, grun, blau, lab_black, ShapeType.Hexagon)
+        draw_row(fixed_page, factory, origin, master_box_size, labBrush, iccBrush, deviceNBrush, allBrush, ShapeType.Hexagon)
         origin.y += 200
         draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black,
                  ShapeType.Polygon, sides=8, angle=22.5)
         origin.y += 200
-        draw_row(fixed_page, factory, origin, master_box_size, rot, grun, blau, lab_black, ShapeType.Target)
+        draw_row(fixed_page, factory, origin, master_box_size, labBrush, iccBrush, deviceNBrush, allBrush, ShapeType.Target)
 
         # Write to PDF
         pdf = IPDFOutput.create(jaws_mako)
@@ -134,25 +144,27 @@ def main():
         print("Exception:", str(e))
 
 
-def draw_row(page, factory, origin, master_box_size, cyan, magenta, yellow, black, shape_type, sides=0, angle=0.0):
+def draw_row(page, factory, origin, master_box_size, cyan, magenta, yellow, black, shape_type, sides=0, angle=0.0, lines=0):
     brushes = [cyan, magenta, yellow, black]
     box_size = FPoint(master_box_size.x, master_box_size.y)
     start = FPoint(origin.x, origin.y)
 
     for brush in brushes:
         stroke_box = FRect(start.x, start.y, box_size.x, box_size.y)
-        stroke_geom = create_geometry(factory, stroke_box, shape_type, sides, angle)
+        stroke_geom = create_geometry(factory, stroke_box, shape_type, sides, angle, lines)
         page.appendChild(IDOMPathNode.createStroked(factory, stroke_geom, brush))
 
         fill_box = FRect(stroke_box.x, stroke_box.y + box_size.y * 1.1, box_size.x, box_size.y)
-        fill_geom = create_geometry(factory, fill_box, shape_type, sides, angle)
+        fill_geom = create_geometry(factory, fill_box, shape_type, sides, angle, lines + 4)
         page.appendChild(IDOMPathNode.createFilled(factory, fill_geom, brush))
 
         start.x += box_size.x * 1.2
-        box_size.x *= 1.4
+        box_size.x *= 1.3
+
+        lines += 1
 
 
-def create_geometry(factory, box, shape_type, sides, angle):
+def create_geometry(factory, box, shape_type, sides, angle, lines):
     if shape_type == ShapeType.Ellipse:
         return IDOMPathGeometry.createEllipse(factory, box)
     elif shape_type == ShapeType.Hexagon:
@@ -160,7 +172,7 @@ def create_geometry(factory, box, shape_type, sides, angle):
     elif shape_type == ShapeType.Polygon:
         return IDOMPathGeometry.createPolygon(factory, box, int(sides), angle)
     elif shape_type == ShapeType.Target:
-        return create_target(factory, box, 8, angle)
+        return create_target(factory, box, lines, angle)
     else:
         return IDOMPathGeometry.create(factory, box)
 
@@ -188,16 +200,15 @@ def create_target(factory, box, n_lines, rotation):
     return builder.createGeometry(factory, IDOMPathGeometry.eFRNonZero)
 
 
-def make_separation_color(factory, name, representation):
-    colorant = IDOMColorSpaceDeviceN.CColorantInfo(name, CEDLVectDouble(representation))
+def make_deviceN_color(factory, name, representation, alternate):
+    # Create a vector of colorants with one entry
     colorants = CEDLVectColorantInfo()
+    colorant = IDOMColorSpaceDeviceN.CColorantInfo(name, representation)
     colorants.append(colorant)
 
-    alternate = IDOMColorSpaceLAB.create(factory,
-                                         0.9642, 1.0, 0.8249,
-                                         0.0, 0.0, 0.0,
-                                         -128.0, 127.0, -128.0, 127.0) if len(representation) == 3 else IDOMColorSpaceDeviceCMYK.create(factory)
+    # Create the DeviceN space
     color_space = IDOMColorSpaceDeviceN.create(factory, colorants, alternate)
+    # Return the new spot color
     return IDOMColor.create(factory, color_space, 1.0, 1.0)
 
 
