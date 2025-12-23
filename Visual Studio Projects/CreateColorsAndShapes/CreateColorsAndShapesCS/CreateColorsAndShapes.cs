@@ -23,7 +23,6 @@ namespace SpotColorShapes
             {
                 using var mako = IJawsMako.create();
                 IJawsMako.enableAllFeatures(mako);
-                var factory = mako.getFactory();
 
                 using var assembly = IDocumentAssembly.create(mako);
                 using var document = IDocument.create(mako);

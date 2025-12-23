@@ -1,3 +1,5 @@
+![Mako Logo](logo-mako.png)
+
 # Mako Sample Projects
 
 Here you can find all the sample code that is referenced in the [Mako General Documentation](https://documentation.globalgraphics.com/mako/mako-core), plus more public sample code made using the Mako SDK.

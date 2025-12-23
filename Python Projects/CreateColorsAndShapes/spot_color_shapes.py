@@ -206,6 +206,7 @@ def make_deviceN_color(factory, name, representation, alternate):
     colorant = IDOMColorSpaceDeviceN.CColorantInfo(name, representation)
     colorants.append(colorant)
 
+    print(f"Colorants: {len(colorants)}, Components: {alternate.getNumComponents()}")
     # Create the DeviceN space
     color_space = IDOMColorSpaceDeviceN.create(factory, colorants, alternate)
     # Return the new spot color

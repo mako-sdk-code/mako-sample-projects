@@ -412,6 +412,7 @@ mako-gnu_linux-x64
 *.png
 *.ps
 *.icc
+!logo-mako.png
 
 # Intellij
 .idea/
