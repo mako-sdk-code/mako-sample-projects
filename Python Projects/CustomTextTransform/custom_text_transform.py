@@ -24,6 +24,9 @@ class TextTransformImplementation( ICustomTransform.IImplementation):
         self.m_factory = jaws_mako.getFactory()
         self.m_textInkValue = text_ink_value
 
+    def transformNode(self, genericImplementation, node, changed, transformChildren, state):
+        return genericImplementation.transformNode(None, node, changed, transformChildren, state)
+
     def transformGlyphs(self, genericImplementation, glyphs, changed, state):
         try:
             fill = glyphs.getFill()
@@ -38,8 +41,7 @@ class TextTransformImplementation( ICustomTransform.IImplementation):
                 newBrush =  IDOMSolidColorBrush.createSolidCmyk(
                     self.m_factory, 0.0, 0.0, 0.0, self.m_textInkValue)
                 glyphs.setFill(newBrush)
-                changed = True
-                return glyphs
+                return glyphs, True
 
         except  MakoException as e:
             error_str =  getEDLErrorString(e.m_errorCode)
@@ -81,8 +83,7 @@ def main():
 
         for i in range(page_count):
             page = document.getPage(i)
-            changed = False
-            text_modifier.transformPage(page, changed)
+            text_modifier.transformPage(page)
             page.release()
 
         print("Writing output file ...")

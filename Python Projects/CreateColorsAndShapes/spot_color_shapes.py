@@ -62,10 +62,10 @@ def main():
         pantoneBlue072C_fogra.setColorSpace(iccBasedColorSpace, eRelativeColorimetric, eBPCDefault, factory)
 
         # Create a DeviceN color
-        pantoneBlue072C_spot = make_deviceN_color(factory, "PANTONE BLUE 072 C", CEDLVectDouble({ 17.64, 43.0, -76.0 }), labColorSpace)
+        pantoneBlue072C_spot = make_deviceN_color(factory, "PANTONE BLUE 072 C", CEDLVectDouble([17.64, 43.0, -76.0]), labColorSpace)
 
         # Create an All spot color
-        allColor = make_deviceN_color(factory, "All", CEDLVectDouble({ 1.0, 1.0, 1.0, 1.0 }), IDOMColorSpaceDeviceCMYK.create(factory))
+        allColor = make_deviceN_color(factory, "All", CEDLVectDouble([1.0, 1.0, 1.0, 1.0]), IDOMColorSpaceDeviceCMYK.create(factory))
 
         # Create spot color brushes
         labBrush = IDOMSolidColorBrush.create(factory, pantoneBlue072C_lab)
@@ -114,10 +114,6 @@ def main():
         fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), deviceNBrush))
         start.x += boxSize.x
 
-        # Draw All box
-        box = FRect(start.x, start.y, boxSize.x, boxSize.y)
-        fixed_page.appendChild(IDOMPathNode.createFilled(factory, IDOMPathGeometry.create(factory, box), allBrush))
-
         # Draw a border in All
         strokeWidth = 20
         box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 7) + strokeWidth, boxSize.y + strokeWidth)
@@ -125,7 +121,7 @@ def main():
          IDOMPathGeometry.Null(), strokeWidth))
 
         # Draw some other shapes below
-        origin.y += 160
+        origin.y += 180
 
         draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black, ShapeType.Ellipse)
         origin.y += 200
@@ -134,7 +130,7 @@ def main():
         draw_row(fixed_page, factory, origin, master_box_size, cyan, magenta, yellow, black,
                  ShapeType.Polygon, sides=8, angle=22.5)
         origin.y += 200
-        draw_row(fixed_page, factory, origin, master_box_size, labBrush, iccBrush, deviceNBrush, allBrush, ShapeType.Target)
+        draw_row(fixed_page, factory, origin, master_box_size, labBrush, iccBrush, deviceNBrush, allBrush, ShapeType.Target, lines=3)
 
         # Write to PDF
         pdf = IPDFOutput.create(jaws_mako)
@@ -206,9 +202,8 @@ def make_deviceN_color(factory, name, representation, alternate):
     colorant = IDOMColorSpaceDeviceN.CColorantInfo(name, representation)
     colorants.append(colorant)
 
-    print(f"Colorants: {len(colorants)}, Components: {alternate.getNumComponents()}")
     # Create the DeviceN space
-    color_space = IDOMColorSpaceDeviceN.create(factory, colorants, alternate)
+    color_space = IDOMColorSpaceDeviceN.create(factory, colorants, alternate.toIDOMColorSpace())
     # Return the new spot color
     return IDOMColor.create(factory, color_space, 1.0, 1.0)
 

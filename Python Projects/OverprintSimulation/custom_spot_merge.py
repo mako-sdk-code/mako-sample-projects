@@ -101,13 +101,11 @@ def custom_spot_merge():
             frame_writer = pair.frameWriter
 
             # Spot components to merge
-            components = CEDLVectVectFloat()
+            components = []
             for i in range(num_spots):
-                comps = CEDLVectFloat()
-                vals = spots.getitem(i).components()
-                for c in range(4):
-                    comps.append(vals.getitem(c))
-                components.append(comps)
+                spot = spots.getitem(i)
+                vals = spot.components
+                components.append([vals.getitem(c) for c in range(num_process)])
 
             # Merge each spot buffer with process values
             inv255 = 1.0 / 255.0
@@ -122,7 +120,7 @@ def custom_spot_merge():
                         for i in range(num_spots):
                             spot_val = buffers[num_process + i][row_start + x] * inv255
                             current_val = scanline[idx] * inv255
-                            new_val = 1.0 - (1.0 - components.getitem(i).getitem(c) * spot_val) * (1.0 - current_val)
+                            new_val = 1.0 - (1.0 - components[i][c] * spot_val) * (1.0 - current_val)
                             scanline[idx] = int(new_val * 255.0 + 0.5)
                 frame_writer.writeScanLine(scanline)
 
@@ -136,7 +134,7 @@ def custom_spot_merge():
                 eRelativeColorimetric,
                 eBPCDefault
             )
-            filtered = IDOMFilteredImage.create(factory, pair.getDomImage(), cc)
+            filtered = IDOMFilteredImage.create(factory, pair.domImage, cc)
 
             out_jpeg = f"output_{page_index}.jpg"
             IDOMJPEGImage.encode(mako, filtered, IOutputStream.createToFile(factory, out_jpeg))
