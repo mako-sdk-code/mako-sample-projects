@@ -18,22 +18,21 @@
 using namespace JawsMako;
 using namespace EDL;
 
-int main(int argc, const char* argv[])
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
+int main()
 {
     try
     {
         // Create our JawsMako instance.
-        IJawsMakoPtr jawsMako = IJawsMako::create();
+        auto jawsMako = IJawsMako::create();
         IJawsMako::enableAllFeatures(jawsMako);
-
-        U8String testFilePath = R"(..\..\TestFiles\)";
-        U8String resultFilePath = R"(..\..\TestFiles\)";
 
         // Open the document assembly, the first document, the first page and get the content thereof
         auto input = IInput::create(jawsMako, eFFPDF);
-        auto assembly = input->open(testFilePath + "Cheshire Cat.pdf");
+        auto assembly = input->open(TEST_FILES_PATH + "Cheshire Cat.pdf");
         auto document = assembly->getDocument();
-        auto page = document->getPage(0);
+        auto page = document->getPage();
         auto cropBox = page->getCropBox();
         auto content = page->getContent();
 
@@ -58,19 +57,19 @@ int main(int argc, const char* argv[])
 
         // Fetch the result and encode in an image
         auto image = imageRenderSpec.result;
-        IDOMPNGImage::encode(jawsMako, image, IOutputStream::createToFile(jawsMako, resultFilePath + "Cheshire Cat.png"));
+        IDOMPNGImage::encode(jawsMako, image, IOutputStream::createToFile(jawsMako, + "Cheshire Cat.png"));
 
         return 0;
     }
     catch (IError& e)
     {
         String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return 1;
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 }

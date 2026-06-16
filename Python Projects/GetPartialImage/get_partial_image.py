@@ -10,10 +10,14 @@
 # </summary>
 # -----------------------------------------------------------------------
 #
+import sys
+import os
+from pathlib import Path
 from pickletools import uint8
 
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 
 def main():
     try:
@@ -21,11 +25,9 @@ def main():
         jawsMako = IJawsMako.create("")
         factory = jawsMako.getFactory()
         IJawsMako.enableAllFeatures(jawsMako)
-
-        test_file_path = "TestFiles/"
         image = IDOMJPEGImage.create(
             factory,
-            IInputStream.createFromFile(factory, test_file_path + "WEV_086.JPG")
+            IInputStream.createFromFile(factory, TEST_FILES_PATH + "WEV_086.JPG")
         )
 
         # Extract a portion of the image (the kayak area)
@@ -41,8 +43,12 @@ def main():
 
     except MakoException as e:
         print(f"Mako exception thrown: {e.m_msg}")
+        return 1
     except Exception as e:
         print(f"Exception thrown: {e}")
+        return 1
+
+    return 0
 
 
 def get_partial_image(jawsMako: IJawsMako, image: IDOMImage, sub_image_rect: FRect) -> IDOMImage:
@@ -120,4 +126,4 @@ def get_partial_image(jawsMako: IJawsMako, image: IDOMImage, sub_image_rect: FRe
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

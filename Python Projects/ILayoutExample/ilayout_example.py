@@ -10,9 +10,11 @@
 # ------------------------------------------------------------------------------
 
 import os
+from pathlib import Path
 import sys
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 
 def PT2XPS(value):
     return value / 72.0 * 96.0
@@ -91,7 +93,6 @@ def get_image(factory, image_file, width, height):
 
 
 def main():
-    test_filepath = "TestFiles/"
     input_file = sys.argv[1] if len(sys.argv) > 1 else ""
 
     try:
@@ -165,7 +166,7 @@ def main():
         if input_file:
             width = width_with_margins / 3 * 2
             height = 0
-            image, width, height = get_image(factory, os.path.join(test_filepath, input_file), width, height)
+            image, width, height = get_image(factory, os.path.join(TEST_FILES_PATH, input_file), width, height)
             paragraphs[idx].addRun(ILayoutImageRun.create(mako, image, width, height))
 
         # Body paragraphs
@@ -199,9 +200,13 @@ def main():
 
     except MakoException as e:
         print(f"MakoException: {e.m_msg}")
+        return 1
     except Exception as e:
         print(f"Exception thrown: {e}")
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

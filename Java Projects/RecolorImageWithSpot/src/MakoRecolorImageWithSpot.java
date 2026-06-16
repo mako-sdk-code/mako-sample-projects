@@ -16,9 +16,10 @@
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class MakoRecolorImageWithSpot {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args) {
         try {
-            String testFilepath = "TestFiles/";
 
             IJawsMako mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
@@ -28,7 +29,7 @@ public class MakoRecolorImageWithSpot {
             IDOMSolidColorBrush rubineRedBrush = IDOMSolidColorBrush.create(mako.getFactory(), rubineRed);
 
             // Load an image from disk
-            IDOMPNGImage image = IDOMPNGImage.create(mako.getFactory(), IInputStream.createFromFile(mako.getFactory(), testFilepath + "Cheshire Cat.png"));
+            IDOMPNGImage image = IDOMPNGImage.create(mako.getFactory(), IInputStream.createFromFile(mako.getFactory(), TEST_FILES_PATH + "Cheshire Cat.png"));
 
             // Get image details
             IImageFrame imageFrame = image.getImageFrame(mako.getFactory());
@@ -76,7 +77,8 @@ public class MakoRecolorImageWithSpot {
             IPDFOutput.create(mako).writeAssembly(assembly, IOutputStream.createToFile(mako.getFactory(), "Cheshire Cat.pdf"));
         }
         catch (Exception e) {
-            System.out.println("Exception thrown: " + e);
+            System.err.println("Exception thrown: " + e);
+            System.exit(1);
         }
     }
 

@@ -12,12 +12,14 @@
 # -----------------------------------------------------------------------
 
 import os
+from pathlib import Path
 import sys
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
+
 def main():
     try:
-        test_file_path = "TestFiles"
 
         if len(sys.argv) < 5:
             print(f"Usage: {os.path.basename(sys.argv[0])} <source file> <spots to retain> <spots to ignore> <framebuffers=true/false")
@@ -39,7 +41,7 @@ def main():
 
         # Input
         pdf_input = IPDFInput.create(mako)
-        assembly = pdf_input.open(os.path.join(test_file_path, input_file))
+        assembly = pdf_input.open(os.path.join(TEST_FILES_PATH, input_file))
         page = assembly.getDocument().getPage()
         fixed_page = page.getContent()
 
@@ -97,7 +99,7 @@ def main():
 
             for j in range(len(component_names)):
                 tiff_filename = f"{stem}_regular_{component_names[j]}.tif"
-                tiff_path = os.path.join(test_file_path, tiff_filename)
+                tiff_path = os.path.join(TEST_FILES_PATH, tiff_filename)
                 IDOMTIFFImage.encode(mako, images[j], IOutputStream.createToFile(factory, tiff_path))
 
         else:
@@ -142,7 +144,7 @@ def main():
 
             for j in range(num_channels):
                 tiff_filename = f"{stem}_frameBuffer_{component_names[j]}.tif"
-                tiff_path = os.path.join(test_file_path, tiff_filename)
+                tiff_path = os.path.join(TEST_FILES_PATH, tiff_filename)
 
                 writer_pair = IDOMTIFFImage.createWriterAndImage(
                     mako,
@@ -155,7 +157,7 @@ def main():
                     IDOMTIFFImage.eTPNone,
                     eIECNone,
                     False,
-                    IInputStream.createFromFile(factory, os.path.join(test_file_path, input_file)),
+                    IInputStream.createFromFile(factory, os.path.join(TEST_FILES_PATH, input_file)),
                     IOutputStream.createToFile(factory, tiff_path)
                 )
 

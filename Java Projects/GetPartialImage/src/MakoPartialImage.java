@@ -14,6 +14,8 @@
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class MakoPartialImage {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
 
     public static void main(String[] args) {
         try {
@@ -21,11 +23,9 @@ public class MakoPartialImage {
             IJawsMako mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
             var factory = mako.getFactory();
-
-            String testFilePath = "TestFiles/";
             IDOMImage image = IDOMJPEGImage.create(
                     factory,
-                    IInputStream.createFromFile(factory, testFilePath + "WEV_086.JPG")
+                    IInputStream.createFromFile(factory, TEST_FILES_PATH + "WEV_086.JPG")
             );
 
             // Extract a portion of the image (the kayak area)
@@ -39,7 +39,8 @@ public class MakoPartialImage {
             );
         }
         catch (Exception e) {
-            System.out.println("Exception thrown: " + e);
+            System.err.println("Exception thrown: " + e);
+            System.exit(1);
         }
     }
 

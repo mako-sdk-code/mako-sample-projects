@@ -10,8 +10,11 @@
 # --------------------------------------------------------------------------------
 
 import sys
+import os
+from pathlib import Path
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 class NodeTreeCallback(WalkTreeCallback):
     """Custom tree visitor callback class"""
     def visitNode(self, node):
@@ -65,7 +68,6 @@ def dump_node_info(node):
 
 def main():
     try:
-        test_filepath = "TestFiles/"
 
         # Instantiate Mako
         jaws_mako = IJawsMako.create("")
@@ -73,7 +75,7 @@ def main():
 
         # Open PDF and get first page
         pdf_input = IPDFInput.create(jaws_mako)
-        assembly = pdf_input.open(test_filepath + "Cheshire Cat.pdf")
+        assembly = pdf_input.open(TEST_FILES_PATH + "Cheshire Cat.pdf")
         document = assembly.getDocument()
         fixed_page = document.getPage(0).getContent()
 
@@ -83,9 +85,13 @@ def main():
 
     except MakoException as e:
         print(f"Exception thrown: {e.m_errorCode}: {e.m_msg}")
+        return 1
     except Exception as e:
         print(f"Exception thrown: {e}")
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -14,18 +14,17 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class ApexGettingStarted {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args) {
         try {
             // Create our JawsMako instance.
             IJawsMako jawsMako = IJawsMako.create();
             IJawsMako.enableAllFeatures(jawsMako);
 
-            String testFilePath = "TestFiles\\";
-            String resultFilePath = "TestFiles\\";
-
             // Open the document assembly, the first document, the first page and get the content thereof
             IInput input = IInput.create(jawsMako, eFileFormat.eFFPDF);
-            IDocumentAssembly assembly = input.open(testFilePath + "Cheshire Cat.pdf");
+            IDocumentAssembly assembly = input.open(TEST_FILES_PATH + "Cheshire Cat.pdf");
             IDocument document = assembly.getDocument();
             IPage page = document.getPage(0);
             FRect cropBox = page.getCropBox();
@@ -53,12 +52,13 @@ public class ApexGettingStarted {
             // Fetch the result and encode in an image
             IDOMImage image = imageRenderSpec.getResult();
             IDOMPNGImage.encode(jawsMako, image,
-                    IOutputStream.createToFile(jawsMako.getFactory(), resultFilePath + "Cheshire Cat.png"));
+                    IOutputStream.createToFile(jawsMako.getFactory(), TEST_FILES_PATH + "Cheshire Cat.png"));
 
-            System.out.println("Render complete. Output written to " + resultFilePath + "Cheshire Cat.png");
+            System.out.println("Render complete. Output written to " + TEST_FILES_PATH + "Cheshire Cat.png");
         }
         catch (Exception e) {
             System.err.println("Exception thrown: " + e.getMessage());
+            System.exit(1);
         }
     }
 }

@@ -13,14 +13,16 @@
 
 import math
 import sys
+import os
+from pathlib import Path
 
 import jawsmakoIF_python
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 
 def custom_spot_merge():
     # Adjust to your test files folder
-    test_file_path = "TestFiles/"
 
     try:
         # Instantiate Mako
@@ -30,7 +32,7 @@ def custom_spot_merge():
 
         # Load the document
         pdf_input = IPDFInput.create(mako)
-        doc_asm = pdf_input.open(test_file_path + "Robots Plus Process Colors.pdf")
+        doc_asm = pdf_input.open(TEST_FILES_PATH + "Robots Plus Process Colors.pdf")
         document = doc_asm.getDocument()
 
         for page_index in range(document.getNumPages()):
@@ -143,11 +145,13 @@ def custom_spot_merge():
 
     except MakoException as ex:
         print(f"MakoException {ex.m_errorCode}: {ex.m_msg}")
-        sys.exit(1)
+        return 1
     except Exception as ex:
         print(f"Error: {ex}")
-        sys.exit(1)
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    custom_spot_merge()
+    sys.exit(custom_spot_merge())

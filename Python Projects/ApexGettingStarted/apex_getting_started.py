@@ -10,7 +10,11 @@
 # -----------------------------------------------------------------------
 
 import sys
+import os
+from pathlib import Path
 from jawsmakoIF_python import *
+
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 
 def main():
     try:
@@ -18,12 +22,9 @@ def main():
         jaws_mako = IJawsMako.create("")
         IJawsMako.enableAllFeatures(jaws_mako)
 
-        test_file_path = r"TestFiles\\"
-        result_file_path = r"TestFiles\\"
-
         # Open the document assembly, document, first page, and get its content
         input_pdf = IInput.create(jaws_mako, eFFPDF)
-        assembly = input_pdf.open(test_file_path + "Cheshire Cat.pdf")
+        assembly = input_pdf.open(TEST_FILES_PATH + "Cheshire Cat.pdf")
         document = assembly.getDocument()
         page = document.getPage(0)
         crop_box = page.getCropBox()
@@ -48,7 +49,7 @@ def main():
 
         # Fetch result image and encode to PNG
         image = image_spec.result
-        output_stream = IOutputStream.createToFile(jaws_mako.getFactory(), result_file_path + "Cheshire Cat.png")
+        output_stream = IOutputStream.createToFile(jaws_mako.getFactory(), TEST_FILES_PATH + "Cheshire Cat.png")
         IDOMPNGImage.encode(jaws_mako, image, output_stream)
 
         print("Rendered page saved as Cheshire Cat.png")

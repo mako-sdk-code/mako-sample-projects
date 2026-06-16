@@ -16,13 +16,16 @@
 #include <jawsmako/jawsmako.h>
 #include <jawsmako/pdfoutput.h>
 #include <edl/idomcolorspace.h>
+#include <filesystem>
 #include <iostream>
 
 using namespace JawsMako;
 using namespace EDL;
 
+const std::wstring TEST_FILES_PATH = L"..\\..\\..\\..\\TestFiles\\";
+
 // Helper to create an L*a*b spot color
-IDOMColorPtr MakeSeparationColor(IJawsMakoPtr mako, EDLRawString name, const std::initializer_list<double>& lab)
+static IDOMColorPtr MakeSeparationColor(const IJawsMakoPtr& mako, const EDLRawString& name, const std::initializer_list<double>& lab)
 {
     // Create a vector of colorants with one entry
     IDOMColorSpaceDeviceN::CColorantInfo colorantInfo(name, lab);
@@ -30,14 +33,14 @@ IDOMColorPtr MakeSeparationColor(IJawsMakoPtr mako, EDLRawString name, const std
     colorants.append(colorantInfo);
 
     // Define LAB alternate color space
-    IDOMColorSpaceLABPtr alternate = IDOMColorSpaceLAB::create(mako,
+    auto alternate = IDOMColorSpaceLAB::create(mako,
         0.9642f, 1.0000f, 0.8249f,
         0.0f, 0.0f, 0.0f,
         -128.0f, 127.0f,
         -128.0f, 127.0f);
 
     // Create DeviceN color space with alternate
-    IDOMColorSpaceDeviceNPtr colorSpace = IDOMColorSpaceDeviceN::create(
+    auto colorSpace = IDOMColorSpaceDeviceN::create(
         mako->getFactory(),
         colorants,
         edlobj2IDOMColorSpace(alternate));
@@ -51,10 +54,9 @@ int wmain()
 {
     try
     {
-        const std::wstring testFilepath = L"..\\..\\TestFiles\\";
 
         // Instantiate Mako
-        IJawsMakoPtr mako = IJawsMako::create();
+        auto mako = IJawsMako::create();
         IJawsMako::enableAllFeatures(mako);
 
         // Create a spot color and solid color brush
@@ -62,7 +64,7 @@ int wmain()
         auto rubineRedBrush = IDOMSolidColorBrush::create(mako, rubineRed);
 
         // Load an image from disk
-        auto image = IDOMPNGImage::create(mako, IInputStream::createFromFile(mako, (testFilepath + L"Cheshire Cat.png").c_str()));
+        auto image = IDOMPNGImage::create(mako, IInputStream::createFromFile(mako, (TEST_FILES_PATH + L"Cheshire Cat.png").c_str()));
 
         // Get image details
         auto imageFrame = image->getImageFrame(mako);
@@ -80,8 +82,8 @@ int wmain()
             filters.append(IDOMImageColorConverterFilter::create(
                 mako,
                 IDOMColorSpaceDeviceGray::create(mako),
-                eRenderingIntent::ePerceptual,
-                eBlackPointCompensation::eBPCDefault));
+                ePerceptual,
+                eBPCDefault));
         }
         filters.append(IDOMImageInverterFilter::create(mako));
 
@@ -111,17 +113,17 @@ int wmain()
         fixedPage->appendChild(path);
 
         // Save to PDF
-        IPDFOutput::create(mako)->writeAssembly(assembly, IOutputStream::createToFile(mako, L"Cheshire Cat.pdf"));
+        IPDFOutput::create(mako)->writeAssembly(assembly, IOutputStream::createToFile(mako, L"output.pdf"));
     }
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (const std::exception& e)
     {
-        std::wcerr << L"Exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"Exception thrown: " << e.what() << '\n';
     }
 
     return 0;

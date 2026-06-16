@@ -14,6 +14,8 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class TextTransformExample
 {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args)
     {
         if (args.length != 3)
@@ -21,8 +23,6 @@ public class TextTransformExample
             System.err.printf("Usage: java TextTransformExample <input> <output> <inkValue>%n");
             System.exit(1);
         }
-
-        String testFilePath = "TestFiles/";
         String inputFile = args[0];
         String outputFile = args[1];
         float inkValue = Float.parseFloat(args[2]);
@@ -37,7 +37,7 @@ public class TextTransformExample
             ICustomTransform textModifier = ICustomTransform.create(jawsMako, implementation);
 
             IInput input = IInput.create(jawsMako, eFileFormat.eFFPDF);
-            IDocumentAssembly assembly = input.open(testFilePath + inputFile);
+            IDocumentAssembly assembly = input.open(TEST_FILES_PATH + inputFile);
             IDocument document = assembly.getDocument();
 
             long pageCount = document.getNumPages();

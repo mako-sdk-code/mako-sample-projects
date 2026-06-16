@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="CustomSpotMerge.cs" company="Hybrid Software">
 //   Copyright (c) 2025 Hybrid Software.
 // </copyright>
@@ -7,57 +7,52 @@
 // </summary>
 // -----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
 using JawsMako;
 
-class CustomSpotMerge
+class CustomSpotMergingCS
 {
-    static void Main(string[] args)
-    {
-        // Adjust to your test files folder
-        string testFilePath = @"..\..\..\..\TestFiles\";
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
 
+    static int Main()
+    {
         try
         {
-            var mako = IJawsMako.create();
+            using var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
 
             // Load the document
-            var docAsm = IPDFInput.create(mako).open(Path.Combine(testFilePath, "Robots Plus Process Colors.pdf"));
-            var doc = docAsm.getDocument();
+            using var assembly = IPDFInput.create(mako).open(Path.Combine(TestFilesPath, "Robots Plus Process Colors.pdf"));
+            using var document = assembly.getDocument();
 
-            for (uint pageIndex = 0; pageIndex < doc.getNumPages(); pageIndex++)
+            for (uint pageIndex = 0; pageIndex < document.getNumPages(); pageIndex++)
             {
-                var fixedPage = doc.getPage(pageIndex).getContent();
+                using var fixedPage = document.getPage(pageIndex).getContent();
 
                 // Page bounds & raster geometry
-                var bounds = new FRect(0, 0, fixedPage.getWidth(), fixedPage.getHeight());
-                double resolution = 150.0;
-                uint pixelWidth = (uint)Math.Round(bounds.dX / 96.0 * resolution);
-                uint pixelHeight = (uint)Math.Round(bounds.dY / 96.0 * resolution);
+                using var bounds = new FRect(0, 0, fixedPage.getWidth(), fixedPage.getHeight());
+                const double resolution = 150.0;
+                var pixelWidth = (uint)Math.Round(bounds.dX / 96.0 * resolution);
+                var pixelHeight = (uint)Math.Round(bounds.dY / 96.0 * resolution);
 
                 // Colorspace must be CMYK for spot merging (we can convert to RGB later)
-                var cmyk = IDOMColorSpaceDeviceCMYK.create(mako);
+                using var cmyk = IDOMColorSpaceDeviceCMYK.create(mako);
 
                 // ----- Find inks and build spot list (names + CMYK components) -----
-                var spots = IRendererTransform.inkInfoToColorantInfo(mako, IRendererTransform.findInks(mako, fixedPage), cmyk);
-                var spotNames = new CEDLVectWString();
+                using var spots = IRendererTransform.inkInfoToColorantInfo(mako, IRendererTransform.findInks(mako, fixedPage), cmyk);
+                using var spotNames = new CEDLVectWString();
 
                 foreach (var spot in spots.toVector())
                     spotNames.append(spot.name);
 
                 int numProcess = cmyk.getNumComponents(); // 4 (CMYK)
-                int numSpots = (int)spots.size();
-                int numBuffers = numProcess + numSpots;
+                var numSpots = (int)spots.size();
+                var numBuffers = numProcess + numSpots;
 
                 // ----- Prepare frame buffers for renderSeparationsToFrameBuffers() -----
                 var buffers = new byte[numBuffers][];
-                var fb = new CEDLVectCFrameBufferInfo();
+                using var fb = new CEDLVectCFrameBufferInfo();
 
-                for (int i = 0; i < numBuffers; i++)
+                for (var i = 0; i < numBuffers; i++)
                 {
                     buffers[i] = new byte[pixelHeight *  pixelWidth];
 
@@ -71,7 +66,7 @@ class CustomSpotMerge
                 }
 
                 // ----- Render true separations (process first, then spots) -----
-                var renderer = IJawsRenderer.create(mako);
+                using var renderer = IJawsRenderer.create(mako);
                 renderer.renderSeparationsToFrameBuffers(
                     fixedPage,
                     8,                    // bits per component per plate
@@ -85,11 +80,11 @@ class CustomSpotMerge
                     bounds,
                     spotNames,            // which spots to keep (all found)
                     IOptionalContent.Null(),
-                    eOptionalContentEvent.eOCEPrint // Non printable layers will be off
+                    eOptionalContentEvent.eOCEPrint // Non-printable layers will be off
                 );
 
                 // ----- Create writer and image -----
-                var pair = IDOMRawImage.createWriterAndImage(
+                using var pair = IDOMRawImage.createWriterAndImage(
                     mako,
                     cmyk,
                     pixelWidth,
@@ -98,10 +93,10 @@ class CustomSpotMerge
                     resolution, resolution
                 );
 
-                IImageFrameWriter frameWriter = pair.frameWriter;
+                using var frameWriter = pair.frameWriter;
 
                 // ----- Get spot components of spots to merge -----
-                var components = new CEDLVectVectFloat();
+                using var components = new CEDLVectVectFloat();
                 for (uint i = 0; i < numSpots; i++)
                     components.append(new CEDLVectFloat(new StdVectFloat()
                     {
@@ -125,9 +120,9 @@ class CustomSpotMerge
                             scanline[x * numProcess + c] = buffers[c][rowStart + x];
                             for (uint i = 0; i < numSpots; ++i)
                             {
-                                float spotVal = buffers[numProcess + i][rowStart + x] * inv255;
-                                float currentVal = scanline[x * numProcess + c] * inv255;
-                                float newVal = 1.0f - (1.0f - components[i][c] * spotVal) * (1.0f - currentVal);
+                                var spotVal = buffers[numProcess + i][rowStart + x] * inv255;
+                                var currentVal = scanline[x * numProcess + c] * inv255;
+                                var newVal = 1.0f - (1.0f - components[i][c] * spotVal) * (1.0f - currentVal);
                                 scanline[x * numProcess + c] = (byte)(newVal * 255.0f + 0.5f);
                             }
                         }
@@ -138,11 +133,11 @@ class CustomSpotMerge
                 frameWriter.flushData();
 
                 // ----- Convert to RGB (optional) and save as a JPEG (or other image type) -----
-                var rgb = IDOMColorSpaceDeviceRGB.create(mako);
-                var cc = IDOMImageColorConverterFilter.create(mako, rgb, eRenderingIntent.eRelativeColorimetric, eBlackPointCompensation.eBPCDefault);
-                var filtered = IDOMFilteredImage.create(mako, pair.domImage, cc);
+                using var rgb = IDOMColorSpaceDeviceRGB.create(mako);
+                using var cc = IDOMImageColorConverterFilter.create(mako, rgb, eRenderingIntent.eRelativeColorimetric, eBlackPointCompensation.eBPCDefault);
+                using var filtered = IDOMFilteredImage.create(mako, pair.domImage, cc);
 
-                string outJpeg = $"output_{pageIndex}.jpg";
+                var outJpeg = $"output_{pageIndex}.jpg";
                 IDOMJPEGImage.encode(mako, filtered, IOutputStream.createToFile(mako, outJpeg));
                 Console.WriteLine($"Wrote: {outJpeg}");
             }
@@ -150,12 +145,14 @@ class CustomSpotMerge
         catch (MakoException me)
         {
             Console.Error.WriteLine($"Mako error {me.m_errorCode}: {me.m_msg}");
-            Environment.Exit((int)me.m_errorCode);
+            return 1;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine(ex);
-            Environment.Exit(1);
+            return 1;
         }
+
+        return 0;
     }
 }

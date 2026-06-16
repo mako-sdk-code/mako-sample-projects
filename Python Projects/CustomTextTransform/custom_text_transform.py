@@ -10,9 +10,12 @@
 # -----------------------------------------------------------------------
 
 import sys
+import os
+from pathlib import Path
 import math
 from jawsmakoIF_python import *;
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 class TextTransformImplementation( ICustomTransform.IImplementation):
     """
     Custom transform implementation to adjust black text ink values.
@@ -56,8 +59,6 @@ def main():
     if len(sys.argv) != 4:
         print(f"Usage: {sys.argv[0]} <input> <output> <inkValue>", file=sys.stderr)
         sys.exit(1)
-
-    test_file_path = "TestFiles/"
     input_file = sys.argv[1]
     output_file = sys.argv[2]
     ink_value = float(sys.argv[3])
@@ -75,7 +76,7 @@ def main():
         )
 
         # Open the input PDF
-        assembly =  IInput.create(jaws_mako, eFFPDF).open(test_file_path + input_file)
+        assembly =  IInput.create(jaws_mako, eFFPDF).open(TEST_FILES_PATH + input_file)
         document = assembly.getDocument()
 
         page_count = document.getNumPages()
@@ -93,13 +94,13 @@ def main():
     except MakoException as e:
         error_str =  getEDLErrorString(e.m_errorCode)
         print(f"Exception thrown: {e.m_msg}", file=sys.stderr)
-        sys.exit(int(e.m_errorCode))
+        return int(e.m_errorCode)
     except Exception as e:
         print(f"std::exception thrown: {e}", file=sys.stderr)
-        sys.exit(1)
+        return 1
 
-    sys.exit(0)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

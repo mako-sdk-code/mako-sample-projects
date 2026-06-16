@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="PageInsert.cs" company="Hybrid Software Helix Ltd">
  *    Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
  *  </copyright>
@@ -14,23 +14,23 @@ using System.Diagnostics;
 using JawsMako;
 using static JawsMako.jawsmakoIF_csharp;
 
-namespace AddCoverPage;
+namespace PageInsertCS;
 
 internal class PageInsert
 {
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
     static int Main(string[] args)
     {
-        var testFilepath = @"..\..\..\..\TestFiles\";
-
-        if (args.Length < 3)
+        if (args.Length != 3)
         {
-            Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <input> <output> <cover>");
+            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <input> <output> <cover>");
             return 1;
         }
 
-        var fileThatNeedsACover = testFilepath + args[0];
+        var fileThatNeedsACover = TestFilesPath + args[0];
         var fileThatNowHasACover = args[1];
-        var coverPageFile = testFilepath + args[2];
+        var coverPageFile = TestFilesPath + args[2];
 
         try
         {
@@ -42,13 +42,13 @@ internal class PageInsert
             stopWatch.Start();
 
             // File we want to insert into
-            var inputStream = IInputStream.createFromFile(mako, fileThatNeedsACover);
+            using var inputStream = IInputStream.createFromFile(mako, fileThatNeedsACover);
 
             // File we want to get our cover page from 
-            var insertStream = IInputStream.createFromFile(mako, coverPageFile);
+            using var insertStream = IInputStream.createFromFile(mako, coverPageFile);
 
             // Create inserter
-            IPDFPageInserter pageInserter = IPDFPageInserter.create(mako, inputStream);
+            using var pageInserter = IPDFPageInserter.create(mako, inputStream);
 
             // Do the insertion - page numbers are zero-based
             pageInserter.insert(insertStream, 0, 0, 1);

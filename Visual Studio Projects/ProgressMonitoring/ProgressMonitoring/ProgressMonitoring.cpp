@@ -17,6 +17,7 @@
 #include <jawsmako/pdfinput.h>
 #include <jawsmako/customtransform.h>
 #include <deque>
+#include <print>
 
 using namespace JawsMako;
 using namespace EDL;
@@ -53,7 +54,7 @@ public:
         if (path.size() < 3)
         {
             // Cannot determine the extension if there isn't one!
-            std::string message("Cannot determine file extension for path ");
+            auto message("Cannot determine file extension for path ");
             throw std::length_error(message);
         }
 
@@ -61,7 +62,7 @@ public:
         if (extensionPosition != String::npos)
         {
             std::wstring extension = path.substr(extensionPosition);
-            std::transform(extension.begin(), extension.end(), extension.begin(), towlower);
+            std::ranges::transform(extension, extension.begin(), towlower);
 
             if (extension == L".xps")
                 return eFFXPS;
@@ -85,7 +86,7 @@ public:
                 return eFFOXPS;
         }
 
-        std::string message("Unsupported file type for path ");
+        auto message("Unsupported file type for path ");
         throw std::invalid_argument(message);
     }
 };
@@ -101,7 +102,7 @@ public:
     {
         m_tickCount++;
 
-        printf("%s : %d\n", m_info.c_str(), m_tickCount);
+        std::println("{} : {}", m_info, m_tickCount);
         fflush(stdout);
     }
 
@@ -110,7 +111,7 @@ public:
 
     static std::shared_ptr<ProgressHandler>  create(const std::string& info)
     {
-        std::shared_ptr<ProgressHandler> progressHandler = std::make_shared<ProgressHandler>(info);
+        auto progressHandler = std::make_shared<ProgressHandler>(info);
 
         progressHandler->m_progressTick = IProgressTick::create(callbackInt, progressHandler.get());
 
@@ -121,7 +122,7 @@ protected:
 
     static void callbackInt(void* priv, uint32_t currentCount, uint32_t maxCount)
     {
-        ProgressHandler* progressHandler = (ProgressHandler*)priv;
+        auto progressHandler = static_cast<ProgressHandler*>(priv);
 
         progressHandler->tick(currentCount, maxCount);
     }
@@ -144,39 +145,39 @@ public:
             m_nodeCount = 0;
             m_nodeDepth = 0;
             m_nodes.clear();
-            printf("start of page %d\n", m_pageCount);
+            std::println("start of page {}", m_pageCount);
             break;
         case IProgressEventHandler::eEvtPageWriteEnd:
-            printf("end of page %d, got %d node events\n", m_pageCount, m_nodeCount);
-            if (m_nodeDepth != 0) printf("mismatch in node write start/end %d\n", m_nodeDepth);
+	        std::println("end of page {}, got {} node events", m_pageCount, m_nodeCount);
+            if (m_nodeDepth != 0) std::println("mismatch in node write start/end {}", m_nodeDepth);
             break;
         case IProgressEventHandler::eEvtNodeWriteStart:
             id = ++m_nodeCount;
             m_nodeDepth++;
             m_nodes.push_back(id);
             if (id % 500 == 0) {
-                printf("start of node %d\n", id);
+	            std::println("start of node {}", id);
             }
             break;
         case IProgressEventHandler::eEvtNodeWriteEnd:
             m_nodeDepth--;
             if (m_nodes.empty())
-                printf("mismatch, empty nodes\n");
+	            std::println("mismatch, empty nodes");
             else {
                 id = m_nodes.back();
                 m_nodes.pop_back();
                 if (id % 500 == 0) {
-                    printf("end of node %d\n", id);
+	                std::println("end of node {}", id);
                 }
             }
             break;
-        default:
+        case IProgressEventHandler::eEvtNone:
             break;
         }
     }
     // Everything below this part can be reused
     static std::shared_ptr<ProgressEventHandler> create() {
-        std::shared_ptr<ProgressEventHandler> progressEventHandler = std::make_shared<ProgressEventHandler>();
+        auto progressEventHandler = std::make_shared<ProgressEventHandler>();
         progressEventHandler->m_progressEventHandler = IProgressEventHandler::create(callback, progressEventHandler.get());
         return progressEventHandler;
     }
@@ -187,8 +188,7 @@ public:
     IProgressEventHandlerPtr m_progressEventHandler;
 protected:
     static void callback(void* priv, IProgressEventHandler::Event evt) {
-        ProgressEventHandler* progressEventHandler = (ProgressEventHandler*)priv;
-        if (progressEventHandler)
+	    if (auto progressEventHandler = static_cast<ProgressEventHandler*>(priv))
             progressEventHandler->handleEvent(evt);
     }
 };
@@ -219,10 +219,10 @@ static void output_iterateByPage(const ConverterParams& cvtParams,
 
     // Create the transform
     CEmptyTransformImplementation implementation(jawsMako);
-    ITransformPtr customTransform = ICustomTransform::create(jawsMako, &implementation);
+    auto customTransform = ICustomTransform::create(jawsMako, &implementation);
     customTransform->setProgressMonitor(cvtParams.m_customTransformProgressMonitor);
 
-    IColorConverterTransformPtr ccTransform = IColorConverterTransform::create(jawsMako);
+    auto ccTransform = IColorConverterTransform::create(jawsMako);
     IDOMColorSpacePtr deviceCmyk = IDOMColorSpaceDeviceCMYK::create(jawsMako);
     ccTransform->setTargetSpace(deviceCmyk);
     ccTransform->setProgressMonitor(cvtParams.m_transformProgressMonitor);
@@ -230,7 +230,7 @@ static void output_iterateByPage(const ConverterParams& cvtParams,
 
     ITransformChainPtr transformChain;
     {
-        IColorConverterTransformPtr colorConverter = IColorConverterTransform::create(jawsMako);
+        auto colorConverter = IColorConverterTransform::create(jawsMako);
 
         transformChain = ITransformChain::create(jawsMako, cvtParams.m_transformChainProgressMonitor);
 
@@ -246,7 +246,7 @@ static void output_iterateByPage(const ConverterParams& cvtParams,
             break;
         }
 
-        IDocumentPtr document = assembly->getDocument(docNo);
+        auto document = assembly->getDocument(docNo);
 
         outputWriter->beginDocument(document);
 
@@ -262,7 +262,7 @@ static void output_iterateByPage(const ConverterParams& cvtParams,
                 break;
             }
 
-            IPagePtr page = document->getPage(pageIndex);
+            auto page = document->getPage(pageIndex);
 
             // Test progress monitor in ICustomTransform
             {
@@ -271,14 +271,14 @@ static void output_iterateByPage(const ConverterParams& cvtParams,
 
             // Test progress monitor in a single ITransform
             {
-                IDOMFixedPagePtr fixedPage = page->getContent();
+                auto fixedPage = page->getContent();
                 bool changed = false;
                 ccTransform->transform(fixedPage, changed);
             }
 
             // Test progress monitor in a transform chain
             {
-                IDOMFixedPagePtr fixedPage = page->getContent();
+                auto fixedPage = page->getContent();
                 bool changed = false;
                 transformChain->transform(fixedPage, changed);
             }
@@ -324,43 +324,43 @@ int main(int argc, char* argv[])
         cvtParams.setOutputPath(argv[2]);
 
         // Create our JawsMako instance.
-        const IJawsMakoPtr jawsMako = IJawsMako::create();
+        const auto jawsMako = IJawsMako::create();
         IJawsMako::enableAllFeatures(jawsMako);
 
-        std::shared_ptr<ProgressHandler>    inputProgressHandler = ProgressHandler::create("input");
-        std::shared_ptr<ProgressHandler>    customTransformProgressHandler = ProgressHandler::create("customtransform");
-        std::shared_ptr<ProgressHandler>    transformProgressHandler = ProgressHandler::create("transform");
-        std::shared_ptr<ProgressHandler>    transformChainProgressHandler = ProgressHandler::create("transformChain");
+        auto inputProgressHandler = ProgressHandler::create("input");
+        auto customTransformProgressHandler = ProgressHandler::create("customtransform");
+        auto transformProgressHandler = ProgressHandler::create("transform");
+        auto transformChainProgressHandler = ProgressHandler::create("transformChain");
 
         // Use a ProgressEventHandler for the output to get more detailed information
-        std::shared_ptr<ProgressEventHandler>    outputProgressHandler = ProgressEventHandler::create();
+        auto outputProgressHandler = ProgressEventHandler::create();
 
-        IAbortPtr           abort = IAbort::create();
-        IProgressMonitorPtr inputProgressMonitor = IProgressMonitor::create(inputProgressHandler->m_progressTick, abort);
+        auto abort = IAbort::create();
+        auto inputProgressMonitor = IProgressMonitor::create(inputProgressHandler->m_progressTick, abort);
         
         cvtParams.m_customTransformProgressMonitor = IProgressMonitor::create(customTransformProgressHandler->m_progressTick, abort);
         cvtParams.m_transformProgressMonitor = IProgressMonitor::create(transformProgressHandler->m_progressTick, abort);
         cvtParams.m_transformChainProgressMonitor = IProgressMonitor::create(transformChainProgressHandler->m_progressTick, abort);
 
         // Set ProgressEventHandler for output progress monitor
-        IProgressMonitorPtr outputProgressMonitor = IProgressMonitor::create(abort);
+        auto outputProgressMonitor = IProgressMonitor::create(abort);
         outputProgressMonitor->setProgressEventHandler(outputProgressHandler->m_progressEventHandler);
 
         // Create input pointer
-        IInputPtr input = IInput::create(jawsMako, cvtParams.m_inputFileFormat, inputProgressMonitor);
+        auto input = IInput::create(jawsMako, cvtParams.m_inputFileFormat, inputProgressMonitor);
 
         // Create output pointer and set optional parameters
-        const IOutputPtr output = IOutput::create(jawsMako, cvtParams.m_outputFileFormat, outputProgressMonitor);
+        const auto output = IOutput::create(jawsMako, cvtParams.m_outputFileFormat, outputProgressMonitor);
 
         // Get the assembly from the input.
-        const IDocumentAssemblyPtr assembly = input->open(cvtParams.m_inputFilePath.c_str());
+        const auto assembly = input->open(cvtParams.m_inputFilePath.c_str());
 
         output_iterateByPage(cvtParams, jawsMako, assembly, output);
     }
     catch (IError& e)
     {
         String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
 #ifdef _WIN32
         // On windows, the return code allows larger numbers, and we can return the error code
         return static_cast<int>(e.getErrorCode());
@@ -372,7 +372,7 @@ int main(int argc, char* argv[])
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

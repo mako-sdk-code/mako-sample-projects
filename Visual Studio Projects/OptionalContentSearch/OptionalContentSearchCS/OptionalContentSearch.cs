@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="Program.cs" company="Hybrid Software Helix Ltd">
  *    Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
  *  </copyright>
@@ -12,121 +12,101 @@
 
 using JawsMako;
 
-namespace OptionalContentSearch
+namespace OptionalContentSearchCS;
+
+internal class OptionalContentSearch
 {
-    internal class OptionalContentSearch
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
+    static int Main(string[] args)
     {
-        static int Main(string[] args)
+        if (args.Length != 1)
         {
-            try
-            {
-                var testFilepath = @"..\..\..\..\TestFiles\";
-
-                var mako = IJawsMako.create();
-                using var document = IPDFInput.create(mako).open(testFilepath + args[0]).getDocument();
-
-                // Input is a multi-page .pdf and on each page, we have different optional content (Layer).
-                var optionalContent = document.getOptionalContent();
-
-                // Create a custom transform to do our searching
-                var optionalContentSearchImplementation = new COptionalContentSearchImplementation();
-                var optionalContentSearchTransform = ICustomTransform.create(mako, optionalContentSearchImplementation);
-
-                for (uint pageIndex = 0; pageIndex < document.getNumPages(); pageIndex++)
-                {
-                    Console.WriteLine($"Page {pageIndex + 1}:");
-
-                    // How we can know if the optionalContent is from this page?
-                    // Ask the transform. Note that here we want to clear caches between checks as we always
-                    // want the transform to descend into shared resources for each page. Caching would ordinarily
-                    // preclude that.
-                    //
-                    // We operate on a clone to ensure no changes to the tree. Custom transforms automatically
-                    // clean up duplicated resources which could cause an edit.
-                    optionalContentSearchImplementation.reset();
-                    optionalContentSearchTransform.flushCaches();
-                    optionalContentSearchTransform.transformPage(document.getPage(pageIndex).clone());
-
-                    // So what groups do we have?
-                    var foundGroups = optionalContentSearchImplementation.getFoundGroups();
-                    foreach (var foundGroup in foundGroups)
-                    {
-                        IOptionalContentGroup group = optionalContent.getGroup(foundGroup);
-
-                        // This group is present - do something with this information
-                        Console.WriteLine($"  Found group: {group.getName()}");
-                    }
-                }
-            }
-            catch (MakoException e)
-            {
-                Console.WriteLine("Exception thrown: " + e.m_msg);
-                return 1;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception thrown: {e}");
-            }
-
-            return 0;
+            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <input.pdf>");
+            return 1;
         }
 
-        /// <summary>
-        /// Custom transform to find relevant optional content
-        /// </summary>
-        class COptionalContentSearchImplementation : ICustomTransform.IImplementation
+        try
         {
-            public COptionalContentSearchImplementation()
-            {
-                m_foundGroups = new List<IOptionalContentGroupReference>();
-            }
 
-            public void reset()
-            {
-                m_foundGroups.Clear();
-            }
+            using var mako = IJawsMako.create();
+            IJawsMako.enableAllFeatures(mako);
+            using var document = IPDFInput.create(mako).open(TestFilesPath + args[0]).getDocument();
 
-            public List<IOptionalContentGroupReference> getFoundGroups()
-            {
-                return m_foundGroups;
-            }
+            // Input is a multi-page .pdf and on each page, we have different optional content (Layer).
+            var optionalContent = document.getOptionalContent();
 
-            public override IDOMNode transformGroup(ICustomTransform.IImplementation genericImplementation,
-                IDOMGroup group,
-                ref bool changed, bool transformChildren, CTransformState state)
+            // Create a custom transform to do our searching
+            using var optionalContentSearchImplementation = new COptionalContentSearchImplementation();
+            using var optionalContentSearchTransform = ICustomTransform.create(mako, optionalContentSearchImplementation);
+
+            for (uint pageIndex = 0; pageIndex < document.getNumPages(); pageIndex++)
             {
-                // Does this group have optional content information?
-                IOptionalContentDetails details = group.getOptionalContentDetails();
-                if (details != null)
+                Console.WriteLine($"Page {pageIndex + 1}:");
+
+                // How we can know if the optionalContent is from this page?
+                // Ask the transform. Note that here we want to clear caches between checks as we always
+                // want the transform to descend into shared resources for each page. Caching would ordinarily
+                // preclude that.
+                //
+                // We operate on a clone to ensure no changes to the tree. Custom transforms automatically
+                // clean up duplicated resources which could cause an edit.
+                optionalContentSearchImplementation.Reset();
+                optionalContentSearchTransform.flushCaches();
+                optionalContentSearchTransform.transformPage(document.getPage(pageIndex).clone());
+
+                // So what groups do we have?
+                var foundGroups = optionalContentSearchImplementation.GetFoundGroups();
+                foreach (var group in foundGroups.Select(foundGroup => optionalContent.getGroup(foundGroup)))
                 {
-                    // What groups does this reference?
-                    var referencedGroups = details.getGroupReferences().toVector();
-
-                    // Unfortunately for now we need to laboriously check to see if we've seen this before
-                    foreach (IOptionalContentGroupReference referencedGroup in referencedGroups)
-                    {
-                        bool found = false;
-                        foreach (IOptionalContentGroupReference foundGroup in m_foundGroups)
-                        {
-                            if (foundGroup.Equals(referencedGroup))
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (!found)
-                        {
-                            m_foundGroups.Add(referencedGroup);
-                        }
-                    }
+                    // This group is present - do something with this information
+                    Console.WriteLine($"  Found group: {group.getName()}");
                 }
+            }
+        }
+        catch (MakoException e)
+        {
+            Console.WriteLine("Exception thrown: " + e.m_msg);
+            return 1;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Exception thrown: {e}");
+            return 1;
+        }
 
-                // Descend further
+        return 0;
+    }
+
+    /// <summary>
+    /// Custom transform to find relevant optional content
+    /// </summary>
+    private class COptionalContentSearchImplementation : ICustomTransform.IImplementation
+    {
+        public void Reset() => m_foundGroups.Clear();
+
+        public List<IOptionalContentGroupReference> GetFoundGroups() => m_foundGroups;
+
+        public override IDOMNode transformGroup(ICustomTransform.IImplementation genericImplementation,
+            IDOMGroup group,
+            ref bool changed, bool transformChildren, CTransformState state)
+        {
+            // Does this group have optional content information?
+            var details = group.getOptionalContentDetails();
+            if (details == null)
                 return genericImplementation.transformGroup(null, group, ref changed, transformChildren, state);
-            }
 
-            private readonly List<IOptionalContentGroupReference> m_foundGroups;
+            // What groups does this reference?
+            using var referencedGroups = details.getGroupReferences().toVector();
+
+            // Unfortunately for now we need to laboriously check to see if we've seen this before
+            foreach (var referencedGroup in from referencedGroup in referencedGroups let found = m_foundGroups.Any(foundGroup => foundGroup.Equals(referencedGroup)) where !found select referencedGroup)
+                m_foundGroups.Add(referencedGroup);
+
+            // Descend further
+            return genericImplementation.transformGroup(null, group, ref changed, transformChildren, state);
         }
+
+        private readonly List<IOptionalContentGroupReference> m_foundGroups = [];
     }
 }

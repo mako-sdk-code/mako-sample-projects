@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="Program.cs" company="Global Graphics Software Ltd">
  *    Copyright (c) 2025 Global Graphics Software Ltd. All rights reserved.
  *  </copyright>
@@ -11,69 +11,66 @@
  */
 
 using JawsMako;
-using System.Diagnostics;
-using static JawsMako.jawsmakoIF_csharp;
 
 namespace RenderSeparationsToFrameBuffersCS
 {
     internal class RenderSeparationsToFrameBuffers
     {
+        private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
         static int Main(string[] args)
         {
             try
             {
-                var testFilepath = @"..\..\..\..\TestFiles\";
-
-                if (args.Length < 4)
+                if (args.Length != 4)
                 {
-                    Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <source file> <framebuffers=true/false> <spots to retain> <spots to ignore> <framebuffers=true/false");
-                    return -1;
+                    Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <source file> <spots to retain> <spots to ignore> <framebuffers=true/false>");
+                    return 1;
                 }
-                string inputFile = args[0];
-                string spotsToRetain = args[1];
-                string spotsToIgnore = args[2];
-                string renderToFrameBuffers = args[3];
+
+                var inputFile = args[0];
+                var spotsToRetain = args[1];
+                var spotsToIgnore = args[2];
+                var renderToFrameBuffers = args[3];
 
                 if (renderToFrameBuffers != "true" && renderToFrameBuffers != "false")
                 {
-                    Console.WriteLine("Parameter framebuffers must be true or false not" + args[3]);
-                    return -1;
+                    Console.Error.WriteLine("Parameter framebuffers must be true or false not " + args[3]);
+                    return 1;
                 }
 
-                var mako = IJawsMako.create();
+                using var mako = IJawsMako.create();
                 IJawsMako.enableAllFeatures(mako);
 
                 // Input
-                var pdfInput = IPDFInput.create(mako);
-                using var assembly = pdfInput.open(testFilepath + inputFile);
+                using var pdfInput = IPDFInput.create(mako);
+                using var assembly = pdfInput.open(TestFilesPath + inputFile);
                 using var page = assembly.getDocument().getPage();
                 using var fixedPage = page.getContent();
 
                 // Set image dimensions + colorspace
-                double resolution = 576.0;
-                var bounds = new FRect(0, 0, page.getWidth(), page.getHeight());
+                var resolution = 576.0;
+                using var bounds = new FRect(0, 0, page.getWidth(), page.getHeight());
 
-                uint pixelWidth = (uint)Math.Round(bounds.dX / 96.0 * resolution);
-                uint pixelHeight = (uint)Math.Round(bounds.dY / 96.0 * resolution);
+                var pixelWidth = (uint)Math.Round(bounds.dX / 96.0 * resolution);
+                var pixelHeight = (uint)Math.Round(bounds.dY / 96.0 * resolution);
 
                 const int depth = 8;
-                var testspace = IDOMColorSpaceDeviceCMYK.create(mako);
+                using var testspace = IDOMColorSpaceDeviceCMYK.create(mako);
 
                 // Create spot color lists
-                var inks = IRendererTransform.findInks(mako, fixedPage);
+                using var inks = IRendererTransform.findInks(mako, fixedPage);
 
                 var componentNames = new List<string>();
-                var ignoreSpotColorNames = new CEDLVectString();
-                var retainSpotColorNames = new CEDLVectString();
+                using var ignoreSpotColorNames = new CEDLVectString();
+                using var retainSpotColorNames = new CEDLVectString();
                 var numComponents = testspace.getNumComponents();
 
-                for (int i = 0; i < numComponents; i++)
+                for (var i = 0; i < numComponents; i++)
                     componentNames.Add(testspace.getColorantName((byte)i));
                 
-                foreach (var ink in inks.toVector())
+                foreach (var inkName in inks.toVector().Select(ink => ink.getInkName()))
                 {
-                    var inkName = ink.getInkName();
-
                     if (spotsToIgnore.Contains(inkName))
                         ignoreSpotColorNames.append(inkName);
                     else if (spotsToRetain.Contains(inkName))
@@ -83,12 +80,12 @@ namespace RenderSeparationsToFrameBuffersCS
                     }
                 }
 
-                var renderer = IJawsRenderer.create(mako);
+                using var renderer = IJawsRenderer.create(mako);
 
                 if (renderToFrameBuffers == "false")
                 {
                     // Render using renderSeparations()
-                    CEDLVectIDOMImage images = renderer.renderSeparations(
+                    using var images = renderer.renderSeparations(
                         fixedPage,
                         depth,
                         testspace,
@@ -105,30 +102,30 @@ namespace RenderSeparationsToFrameBuffersCS
                         ignoreSpotColorNames);
 
                     // Write the outputs to TIFF files
-                    string stem = Path.Combine(
+                    var stem = Path.Combine(
                         Path.GetDirectoryName(inputFile) ?? string.Empty,
-                        Path.GetFileNameWithoutExtension(inputFile) ?? "output"
+                        Path.GetFileNameWithoutExtension(inputFile)
                     );
 
-                    for (uint j = 0; j < componentNames.Count(); j++)
+                    for (uint j = 0; j < componentNames.Count; j++)
                     {
-                        string tiffFileName = $"{stem}_regular_{componentNames[(int)j]}.tif";
+                        var tiffFileName = $"{stem}_regular_{componentNames[(int)j]}.tif";
                         IDOMTIFFImage.encode(mako, images[j], IOutputStream.createToFile(mako, tiffFileName));
                     }
                 }
                 else
                 {
                     // Prepare frame buffers
-                    int numChannels = componentNames.Count;
-                    int sourceStride = (int)pixelWidth * numChannels;
+                    var numChannels = componentNames.Count;
+                    var sourceStride = (int)pixelWidth * numChannels;
 
                     var buffers = new byte[numChannels][];
 
-                    var frameBuffers = new CEDLVectCFrameBufferInfo();
+                    using var frameBuffers = new CEDLVectCFrameBufferInfo();
                     for (byte bufferIndex = 0; bufferIndex < numChannels; ++bufferIndex)
                     {
                         // One byte per pixel (depth = 8, single component per plane)
-                        buffers[bufferIndex] = new byte[pixelHeight * (uint)pixelWidth];
+                        buffers[bufferIndex] = new byte[pixelHeight * pixelWidth];
 
                         var frameBufferInfo = new IJawsRenderer.CFrameBufferInfo
                         {
@@ -155,22 +152,22 @@ namespace RenderSeparationsToFrameBuffersCS
                         IOptionalContent.Null(),
                         eOptionalContentEvent.eOCEView,
                         new CEDLVectWString(), // extra components (none)
-                        /*alphGeneration*/ false,
+                        /*alphaGeneration*/ false,
                         /*bandMemorySize*/ 0,
                         new CEDLVectWString(ignoreSpotColorNames.toArray())
                     );
 
                     // Write the outputs to TIFF files
-                    string stem = Path.Combine(
+                    var stem = Path.Combine(
                         Path.GetDirectoryName(inputFile) ?? string.Empty,
-                        Path.GetFileNameWithoutExtension(inputFile) ?? "output"
+                        Path.GetFileNameWithoutExtension(inputFile)
                     );
 
                     for (uint j = 0; j < numChannels; j++)
                     {
                         // From frame buffers
-                        string tiffFileName = $"{stem}_frameBuffer_{componentNames[(int)j]}.tif";
-                        var pair = IDOMTIFFImage.createWriterAndImage(
+                        var tiffFileName = $"{stem}_frameBuffer_{componentNames[(int)j]}.tif";
+                        using var pair = IDOMTIFFImage.createWriterAndImage(
                             mako,
                             IDOMColorSpaceDeviceGray.create(mako),
                             pixelWidth,
@@ -181,11 +178,11 @@ namespace RenderSeparationsToFrameBuffersCS
                             IDOMTIFFImage.eTIFFPrediction.eTPNone,
                             eImageExtraChannelType.eIECNone,
                             /*tiled*/ false,
-                            IInputStream.createFromFile(mako, testFilepath + inputFile), 
+                            IInputStream.createFromFile(mako, TestFilesPath + inputFile),
                             IOutputStream.createToFile(mako, tiffFileName)
                         );
 
-                        IImageFrameWriter frameWriter = pair.frameWriter;
+                        using var frameWriter = pair.frameWriter;
 
                         for (uint y = 0; y < pixelHeight; y++)
                         {
@@ -200,11 +197,13 @@ namespace RenderSeparationsToFrameBuffersCS
             }
             catch (MakoException e)
             {
-                Console.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+                Console.Error.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+                return 1;
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Exception thrown: {e}");
+                Console.Error.WriteLine($"Exception thrown: {e}");
+                return 1;
             }
 
             return 0;

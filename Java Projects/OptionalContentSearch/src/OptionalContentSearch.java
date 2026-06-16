@@ -17,6 +17,12 @@ public class OptionalContentSearch
 {
     public static void main(String[] args)
     {
+        if (args.length != 1)
+        {
+            System.err.println("Usage: OptionalContentSearch <input.pdf>");
+            System.exit(1);
+        }
+
         try
         {
             IJawsMako mako = IJawsMako.create();
@@ -57,7 +63,8 @@ public class OptionalContentSearch
         }
         catch (Exception e)
         {
-            System.out.println("Exception thrown: " + e);
+            System.err.println("Exception thrown: " + e);
+            System.exit(1);
         }
     }
 

@@ -11,6 +11,7 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
 
 #include <jawsmako/jawsmako.h>
@@ -19,29 +20,27 @@
 using namespace JawsMako;
 using namespace EDL;
 
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
 int main()
 {
-
-    U8String testFilePath = R"(..\..\TestFiles\)";
-
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
-        const auto assembly = IInput::create(mako, eFFPDF)->open(testFilePath + "CMYK_Circles 1.pdf");
+        IJawsMako::enableAllFeatures(mako);
+        const auto assembly = IInput::create(mako, eFFPDF)->open(TEST_FILES_PATH + "CMYK_Circles 1.pdf");
         const auto document = assembly->getDocument();
 
         // Apply overprint to all path nodes in all pages
         for (uint32 pageIndex = 0; pageIndex < document->getNumPages(); ++pageIndex) {
-            IPagePtr page = document->getPage(pageIndex);
-            IDOMFixedPagePtr fixedPage = page->edit();
+            auto page = document->getPage(pageIndex);
+            auto fixedPage = page->edit();
 
             CEDLVector<IDOMNodePtr> pathNodes;
             fixedPage->findChildrenOfType(eDOMPathNode, pathNodes, true);
 
             for (auto& node : pathNodes) {
-                IDOMPathNodePtr path = edlobj2IDOMPathNode(node);
-                if (path)
+	            if (auto path = edlobj2IDOMPathNode(node))
                 {
 	                // Apply overprint fill using the new API
 	                path->setFillOverprints(true);
@@ -57,12 +56,12 @@ int main()
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="WalkTree.cs" company="Hybrid Software Helix Ltd">
  *    Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
  *  </copyright>
@@ -16,36 +16,36 @@ namespace WalkTreeExample;
 
 internal class WalkTree
 {
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
     static int Main()
     {
         try
         {
-            var testFilepath = @"..\..\..\..\TestFiles\";
-
-            var mako = IJawsMako.create();
+            using var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
 
             // Input
-            var pdfInput = IPDFInput.create(mako);
-            using var assembly = pdfInput.open(testFilepath + "Cheshire Cat.pdf");
-            using var inFixedPage = assembly.getDocument().getPage()
-                .getContent();
+            using var pdfInput = IPDFInput.create(mako);
+            using var assembly = pdfInput.open(TestFilesPath + "Cheshire Cat.pdf");
+            using var inFixedPage = assembly.getDocument().getPage().getContent();
 
-            void VisitNodeHandler(IDOMNode node) => DumpNodeInfo(node);
-            WalkTreeCallback callback = new NodeTreeCallbackDelegate(VisitNodeHandler);
+            //void VisitNodeHandler(IDOMNode node) => DumpNodeInfo(node);
+            //WalkTreeCallback callback = new NodeTreeCallbackDelegate(VisitNodeHandler);
 
-            //WalkTreeCallback callback = new NodeTreeCallback();
+            WalkTreeCallback callback = new NodeTreeCallback();
 
             inFixedPage.walkTree(callback.getCallbackFunc(), callback.getPriv(), false, true);
-
         }
         catch (MakoException e)
         {
-            Console.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            Console.Error.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            return 1;
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception thrown: {e}");
+            Console.Error.WriteLine($"Exception thrown: {e}");
+            return 1;
         }
 
         return 0;
@@ -74,9 +74,9 @@ internal class WalkTree
         }
     }
 
-    static void DumpNodeInfo(IDOMNode node)
+    private static void DumpNodeInfo(IDOMNode node)
     {
-        IDOMNode p = node;
+        var p = node;
         while (p.getParentNode() is not null)
         {
             Console.Write("  ");
@@ -169,6 +169,8 @@ internal class WalkTree
             case eDOMNodeType.eDOMNodeTypeCnt:
                 Console.Write("eDOMNodeTypeCnt");
                 break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
         Console.WriteLine();
     }

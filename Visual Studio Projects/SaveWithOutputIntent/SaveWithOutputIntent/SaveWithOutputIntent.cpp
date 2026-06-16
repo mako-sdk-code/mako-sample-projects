@@ -1,4 +1,4 @@
-﻿
+
 /* -----------------------------------------------------------------------
  * <copyright file="Main.cpp" company="Hybrid Software Helix Ltd">
  *  Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
@@ -27,17 +27,19 @@ namespace fs = std::filesystem;
 using namespace JawsMako;
 using namespace EDL;
 
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
 #define M2X(value) ((value) / 25.4 * 96.0)
 #define P2X(value) ((value) / 72.0 * 96.0)
 
-IDOMImagePtr getImage(const IJawsMakoPtr& mako, const U8String& imageFile);
+static IDOMImagePtr getImage(const IJawsMakoPtr& mako, const U8String& imageFile);
 
 int main()
 {
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
+        IJawsMako::enableAllFeatures(mako);
 
         // Create assembly, document, page, fixed page
         const auto assembly = IDocumentAssembly::create(mako);
@@ -80,13 +82,13 @@ int main()
         auto run = ILayoutTextRun::create(text.c_str(), font, fontIndex, P2X(12), darkBlue);
         paragraphs.append(header->clone());
         paragraphs[paraIndex]->addRun(run);
-        text = std::format("  ● {} (from {})", profiles[0].first, profiles[0].second);
+        text = std::format("  ? {} (from {})", profiles[0].first, profiles[0].second);
         run = ILayoutTextRun::create(text.c_str(), font, fontIndex, P2X(10));
         paragraphs.append(body->clone());
         paragraphs[++paraIndex]->addRun(run);
 
         // Picture
-        const auto parrot = getImage(mako, R"(..\..\TestFiles\Parrot.png)");
+        const auto parrot = getImage(mako, TEST_FILES_PATH + "Parrot.png");
         paragraphs.append(ILayoutParagraph::create());
         paragraphs[++paraIndex]->addRun(ILayoutImageRun::create(mako, parrot, 0, M2X(169)));
 
@@ -94,7 +96,7 @@ int main()
         fixedPage->appendChild(layout->layout(paragraphs));
 
         // Load profile from local storage
-        const auto iccProfile = IDOMICCProfile::create(mako, IInputStream::createFromFile(mako, R"(..\..\TestFiles\)" + profiles[0].first));
+        const auto iccProfile = IDOMICCProfile::create(mako, IInputStream::createFromFile(mako, TEST_FILES_PATH + profiles[0].first));
 
         // Output intent metadata
         U8String subtype = "GTS_PDFX";
@@ -152,18 +154,16 @@ int main()
         // Check that the PDF has three output intents
         testDocument = IPDFInput::create(mako)->open("OutputIntentExampleThreeIntents.pdf")->getDocument();
         _ASSERT(testDocument->getOutputIntents().size() == 3);
-
-        // Done
     }
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

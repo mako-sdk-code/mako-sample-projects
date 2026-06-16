@@ -12,10 +12,13 @@
 #
 
 import os
+from pathlib import Path
+import sys
 from ctypes import c_uint
 
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 
 def main():
     try:
@@ -79,7 +82,7 @@ def main():
         paragraphs[para_index].addRun(ILayoutRun.fromRCObject(run.toRCObject()))
 
         # Insert image
-        parrot = get_image(jaws_mako, os.path.join("TestFiles", "Parrot.png"))
+        parrot = get_image(jaws_mako, os.path.join(TEST_FILES_PATH, "Parrot.png"))
         paragraphs.append(ILayoutParagraph.create())
         para_index += 1
         paragraphs[para_index].addRun(
@@ -90,7 +93,7 @@ def main():
         fixed_page.appendChild(layout.layout(paragraphs))
 
         # Load ICC profile
-        icc_profile_path = os.path.join("TestFiles", profiles[0][0])
+        icc_profile_path = os.path.join(TEST_FILES_PATH, profiles[0][0])
         icc_profile = IDOMICCProfile.create(
             factory, IInputStream.createFromFile(factory, icc_profile_path)
         )
@@ -176,12 +179,15 @@ def main():
         if test_doc.getOutputIntents().size() != 3:
             raise Exception("Output intent count not equal to 3")
 
-        print("✅ Output intents successfully created and verified.")
+        print("Output intents successfully created and verified.")
+        return 0
 
     except MakoException as e:
         print("MakoException:", e.m_msg)
+        return 1
     except Exception as e:
         print("Exception:", e)
+        return 1
 
 
 # Points (1/72") to XPS units (1/96")
@@ -219,6 +225,5 @@ def get_image(jaws_mako, image_path):
     else:
         raise Exception(f"Unsupported image type: {ext}")
 
-
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -18,10 +18,11 @@ import java.util.*;
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class CustomSpotMerge {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
 
     public static void main(String[] args) {
         // Adjust to your test files folder
-        String testFilePath = "TestFiles/";
 
         try {
             IJawsMako mako = IJawsMako.create();
@@ -30,7 +31,7 @@ public class CustomSpotMerge {
 
             // Load the document
             IPDFInput pdfInput = IPDFInput.create(mako);
-            IDocumentAssembly docAsm = pdfInput.open(testFilePath + "Robots Plus Process Colors.pdf");
+            IDocumentAssembly docAsm = pdfInput.open(TEST_FILES_PATH + "Robots Plus Process Colors.pdf");
             IDocument doc = docAsm.getDocument();
 
             for (int pageIndex = 0; pageIndex < doc.getNumPages(); pageIndex++) {

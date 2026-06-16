@@ -14,9 +14,10 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class OverprintMethods {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
 
     public static void main(String[] args) {
-        String testFilePath = "TestFiles/";
 
         try {
             // Create the Mako instance
@@ -25,7 +26,7 @@ public class OverprintMethods {
 
             // Open the input PDF
             IInput input = IInput.create(mako, eFileFormat.eFFPDF);
-            IDocumentAssembly assembly = input.open(testFilePath + "CMYK_Circles 1.pdf");
+            IDocumentAssembly assembly = input.open(TEST_FILES_PATH + "CMYK_Circles 1.pdf");
             IDocument document = assembly.getDocument();
 
             // Iterate through all pages

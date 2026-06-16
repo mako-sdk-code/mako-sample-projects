@@ -11,6 +11,7 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
 
 #include <jawsmako/jawsmako.h>
@@ -19,17 +20,18 @@
 using namespace JawsMako;
 using namespace EDL;
 
-IDOMImagePtr getPartialImage(const IJawsMakoPtr& mako, IDOMImagePtr image, const FRect& subImageRect);
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
+static IDOMImagePtr getPartialImage(const IJawsMakoPtr& mako, IDOMImagePtr image, const FRect& subImageRect);
 
 int main()
 {
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
-        const U8String testFilePath = R"(..\..\TestFiles\)";
+        IJawsMako::enableAllFeatures(mako);
         const IDOMImagePtr image =
-            IDOMJPEGImage::create(mako, IInputStream::createFromFile(mako, testFilePath + "WEV_086.JPG"));
+            IDOMJPEGImage::create(mako, IInputStream::createFromFile(mako, TEST_FILES_PATH + "WEV_086.JPG"));
 
         const auto partialImage = getPartialImage(mako, image, FRect(230, 230, 400, 250));
         IDOMPNGImage::encode(mako, partialImage, IOutputStream::createToFile(mako, "JustTheKayak.png"));
@@ -37,12 +39,12 @@ int main()
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 
@@ -102,7 +104,7 @@ IDOMImagePtr getPartialImage(const IJawsMakoPtr& mako, IDOMImagePtr image, const
         bps,
         imageFrame->getXResolution(),
         imageFrame->getYResolution(),
-        eImageExtraChannelType::eIECNone,
+        eIECNone,
         inStream, outStream);
 
     CEDLSimpleBuffer rowBuffer(stride);

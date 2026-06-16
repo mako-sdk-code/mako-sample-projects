@@ -1,4 +1,3 @@
-
 /* -----------------------------------------------------------------------
  * <copyright file="Main.cpp" company="Hybrid Software Helix Ltd">
  *  Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
@@ -11,6 +10,7 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
 
 #include <jawsmako/jawsmako.h>
@@ -20,36 +20,35 @@
 using namespace JawsMako;
 using namespace EDL;
 
-int main(int argc, char* argv[])
-{
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
 
-    U8String testFilePath = R"(..\..\TestFiles\)";
+int main(const int argc, char* argv[])
+{
 
     if (argc != 4)
     {
-        std::cerr << "Usage: " << argv[0] << " <input> <output> <inkValue>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <input> <output> <inkValue>" << '\n';
         return 1;
     }
 
     U8String inputFile = argv[1];
     U8String outputFile = argv[2];
-    float inkValue = atof(argv[3]);
-
+    auto inkValue = atof(argv[3]);
 
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
+        IJawsMako::enableAllFeatures(mako);
 
         TextTransformImplementation implementation(mako, inkValue);
         const ITransformPtr textModifier = ICustomTransform::create(mako, &implementation);
 
-        const auto assembly = IInput::create(mako, eFFPDF)->open(testFilePath + inputFile);
+        const auto assembly = IInput::create(mako, eFFPDF)->open(TEST_FILES_PATH + inputFile);
         const auto documentPtr = assembly->getDocument();
 
         const auto pageCount = documentPtr->getNumPages();
 
-        std::wcout << L"Processing " << pageCount << " pages..." << std::endl;
+        std::wcout << L"Processing " << pageCount << " pages..." << '\n';
 
         for (uint32 pageIndex = 0; pageIndex < pageCount; pageIndex++)
         {
@@ -59,7 +58,7 @@ int main(int argc, char* argv[])
             page->release();
         }
 
-        std::wcout << std::endl << L"Writing output file ..." << std::endl;
+        std::wcout << '\n' << L"Writing output file ..." << '\n';
 
         const IPDFOutputPtr pdfOutput = IPDFOutput::create(mako);
         pdfOutput->writeAssembly(assembly, outputFile.c_str());
@@ -68,12 +67,12 @@ int main(int argc, char* argv[])
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

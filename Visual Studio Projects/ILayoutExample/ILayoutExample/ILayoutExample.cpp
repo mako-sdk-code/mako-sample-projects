@@ -1,4 +1,4 @@
-﻿/* -----------------------------------------------------------------------
+/* -----------------------------------------------------------------------
  * <copyright file="ILayoutExample.cpp" company="Hybrid Software Helix Ltd">
  *  Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
  * </copyright>
@@ -23,13 +23,15 @@ namespace fs = std::filesystem;
 using namespace JawsMako;
 using namespace EDL;
 
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
 typedef std::pair<IDOMFontOpenTypePtr, uint32> otf;
 
 #define MM2XPS(value) ((value) / 25.4 * 96.0)
 #define PT2XPS(value) ((value) / 72.0 * 96.0)
 
 // Get font
-otf getOpenTypeFont(const IJawsMakoPtr& mako, const std::vector<U8String>& fontsToTry)
+static otf getOpenTypeFont(const IJawsMakoPtr& mako, const std::vector<U8String>& fontsToTry)
 {
     // Pick a font
     IDOMFontPtr font;
@@ -54,7 +56,7 @@ otf getOpenTypeFont(const IJawsMakoPtr& mako, const std::vector<U8String>& fonts
 }
 
 // Draw a path using a solid color brush with a thickness of 1
-IDOMPathNodePtr drawFrame(const IJawsMakoPtr& mako, const FRect& frameBounds)
+static IDOMPathNodePtr drawFrame(const IJawsMakoPtr& mako, const FRect& frameBounds)
 {
     const double margin = 4;
     const auto border = FRect(frameBounds.x - margin, frameBounds.y - margin, frameBounds.dX + margin * 2, frameBounds.dY + margin * 2);
@@ -65,7 +67,7 @@ IDOMPathNodePtr drawFrame(const IJawsMakoPtr& mako, const FRect& frameBounds)
 }
 
 // Add a layout, draw an outline if requested
-void addFrame(const IJawsMakoPtr& mako, const ILayoutPtr& layout, const IDOMFixedPagePtr& fixedPage, FRect positionAndSize, bool drawOutline = false)
+static void addFrame(const IJawsMakoPtr& mako, const ILayoutPtr& layout, const IDOMFixedPagePtr& fixedPage, FRect positionAndSize, bool drawOutline = false)
 {
     layout->addFrame(ILayoutFrame::create(positionAndSize));
 
@@ -75,10 +77,10 @@ void addFrame(const IJawsMakoPtr& mako, const ILayoutPtr& layout, const IDOMFixe
 }
 
 // Create paragraph
-ILayoutParagraphPtr createParagraph(double spaceAfter = 0.0,
-    ILayoutParagraph::eHorizontalAlignment justification = ILayoutParagraph::eHALeft,
-    double leading = 1.0,
-    double spaceBefore = 0.0)
+static ILayoutParagraphPtr createParagraph(double spaceAfter = 0.0,
+                                           ILayoutParagraph::eHorizontalAlignment justification = ILayoutParagraph::eHALeft,
+                                           double leading = 1.0,
+                                           double spaceBefore = 0.0)
 {
     const auto templateParagraph = ILayoutParagraph::create(justification);
     if (spaceAfter > 0.0)
@@ -149,7 +151,6 @@ IDOMImagePtr getImage(const IJawsMakoPtr& mako, const U8String& imageFile,
 int main(int argc, char** argv)
 {
     U8String lorem = "\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-    U8String testFilePath = R"(..\..\TestFiles\)";
     U8String inputFile = argc > 1 ? argv[1] : "";
     
     try
@@ -229,7 +230,7 @@ int main(int argc, char** argv)
         if (!inputFile.empty())
         {
             double width = widthWithMargins / 3 * 2, height = 0;
-            const auto mountain = getImage(mako, testFilePath + inputFile, width, height);
+            const auto mountain = getImage(mako, TEST_FILES_PATH + inputFile, width, height);
             paragraphs[paraIndex]->addRun(ILayoutImageRun::create(mako, mountain, width, height));
         }
         
@@ -246,8 +247,8 @@ int main(int argc, char** argv)
         assert(arial.first);
 
         // Right-to-left language test
-        String david_header = L"סביבות מגורים - מהביוספירה ועד לנישה האקולוגית";
-        String david_para = L".מרכזו של כדור-הארץ נמצא כמעט 6400 קילומטר מתחת לפני הקרקע. עד כה הצליח האדם להגיע רק לעומק של שמונה קילומטרים בקירוב. אולם כבר היום ידוע לנו כי קילומטרים ספורים מתחת לכפות רגלינו כבר עולה טמפרטורת הארץ למידה שאיננה מאפשרת קיום של חיים. קילומטרים ספורים מעל לראשנו האוויר נעשה דליל וקר, ולא מתאפשר בו קיום של חיים. בתווך מצויה הביוספירה (ביו=חיים, ספירה=עולם) ¬– שכבה דקה על פני כדור-הארץ שעובייה כקליפת תפוח-העץ ביחס לתפוח השלם, אשר בה מתקיים כל עושר החיים המוכר לנו. הביוספירה כוללת את מכלול החיים בים וביבשה, במחילות ובין הרגבים שמתחת לפני הקרקע ובשכבות האוויר הסמוכות לקרקע. הביוספירה היא סביבת החיים הגדולה ביותר המוכרת לנו";
+        String david_header = L"?????? ?????? - ?????????? ??? ????? ?????????";
+        String david_para = L".????? ?? ????-???? ???? ???? 6400 ??????? ???? ???? ?????. ?? ?? ????? ???? ????? ?? ????? ?? ????? ????????? ??????. ???? ??? ???? ???? ??? ?? ????????? ?????? ???? ????? ?????? ??? ???? ???????? ???? ????? ?????? ?????? ???? ?? ????. ????????? ?????? ??? ?????? ?????? ???? ???? ???, ??? ?????? ?? ???? ?? ????. ????? ????? ????????? (???=????, ?????=????) �� ???? ??? ?? ??? ????-???? ??????? ?????? ????-??? ???? ????? ????, ??? ?? ?????? ?? ???? ????? ????? ???. ????????? ????? ?? ????? ????? ??? ??????, ??????? ???? ?????? ????? ???? ????? ??????? ?????? ??????? ?????. ????????? ??? ????? ????? ?????? ????? ?????? ???";
 
         paragraphs.append(createParagraph(8, ILayoutParagraph::eHARight));
         paragraphs[++paraIndex]->addRun(ILayoutTextRun::create(StringToU8String(david_header), david.first, david.second, 16.0));
@@ -261,18 +262,16 @@ int main(int argc, char** argv)
         const auto output = IPDFOutput::create(mako);
         output->setParameter("Producer", "Mako Layout Engine");
         output->writeAssembly(assembly, "MyFirstLayout(CPP).pdf");
-
-        // Done
     }
     catch (IError& e)
     {
         const auto errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

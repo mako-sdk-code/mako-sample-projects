@@ -1,4 +1,4 @@
-﻿/* -----------------------------------------------------------------------
+/* -----------------------------------------------------------------------
  * <copyright file="ApexGettingStarted.cs" company="Hybrid Software Helix Ltd">
  *  Copyright (C) 2025 Hybrid Software Helix Ltd. All rights reserved.
  * </copyright>
@@ -16,29 +16,29 @@ namespace ApexRenderExampleCS;
 
 internal class ApexGettingStarted
 {
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
     static int Main(string[] args)
     {
         try
         {
-            const string testFilePath = "..\\..\\..\\..\\TestFiles\\";
-            const string resultFilePath = "..\\..\\..\\..\\TestFiles\\";
 
-            var mako = IJawsMako.create();
+            using var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
 
             // Open the document assembly, the first document, the first page and get the content thereof
-            var input = IInput.create(mako, eFileFormat.eFFPDF);
-            var assembly = input.open(testFilePath + "Cheshire Cat.pdf");
-            var document = assembly.getDocument();
-            var page = document.getPage();
-            var cropBox = page.getCropBox();
-            var content = page.getContent();
+            using var input = IInput.create(mako, eFileFormat.eFFPDF);
+            using var assembly = input.open(TestFilesPath + "Cheshire Cat.pdf");
+            using var document = assembly.getDocument();
+            using var page = document.getPage();
+            using var cropBox = page.getCropBox();
+            using var content = page.getContent();
 
             // Let's render with Apex
-            var renderer = IApexRenderer.create(mako);
+            using var renderer = IApexRenderer.create(mako);
 
             // First, we need a renderspec; in this case, to render to an IDOMImage
-            var imageRenderSpec = new CImageRenderSpec();
+            using var imageRenderSpec = new CImageRenderSpec();
 
             // We want a 300dpi result, so calculate the size in pixels
             imageRenderSpec.width = (uint)(page.getWidth() / 96.0 * 300.0);
@@ -54,16 +54,18 @@ internal class ApexGettingStarted
             renderer.render(content, imageRenderSpec);
 
             // Fetch the result and encode in an image
-            var image = imageRenderSpec.result;
-            IDOMPNGImage.encode(mako, image, IOutputStream.createToFile(mako, resultFilePath + "Cheshire Cat.png"));
+            using var image = imageRenderSpec.result;
+            IDOMPNGImage.encode(mako, image, IOutputStream.createToFile(mako, "Cheshire Cat.png"));
         }
         catch (MakoException e)
         {
-            Console.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            Console.Error.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            return 1;
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception thrown: {e}");
+            Console.Error.WriteLine($"Exception thrown: {e}");
+            return 1;
         }
 
         return 0;

@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SaveWithOutputIntent {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
 
     public static void main(String[] args) {
         try {
@@ -64,14 +66,14 @@ public class SaveWithOutputIntent {
             paragraphs.getitem(paraIndex).addRun(ILayoutRun.fromRCObject(run.toRCObject()));
 
             // Body text
-            text = "  ● " + profiles.getFirst()[0] + " (from " + profiles.getFirst()[1] + ")";
+            text = "  * " + profiles.get(0)[0] + " (from " + profiles.get(0)[1] + ")";
             run = ILayoutTextRun.create(text, font, fontIndex[0], P2X(10));
             paragraphs.append(body.clone());
             paraIndex++;
             paragraphs.getitem(paraIndex).addRun(ILayoutRun.fromRCObject(run.toRCObject()));
 
             // Insert image
-            IDOMImage parrot = GetImage(mako, "TestFiles/Parrot.png");
+            IDOMImage parrot = GetImage(mako, TEST_FILES_PATH + "Parrot.png");
             paragraphs.append(ILayoutParagraph.create());
             paraIndex++;
             paragraphs.getitem(paraIndex).addRun(ILayoutImageRun.create(mako, parrot, 0, M2X(169)));
@@ -81,7 +83,7 @@ public class SaveWithOutputIntent {
 
             // Load ICC profile from file
             IDOMICCProfile iccProfile = IDOMICCProfile.create(factory,
-                    IInputStream.createFromFile(factory, "TestFiles/" + profiles.getFirst()[0]));
+                    IInputStream.createFromFile(factory, TEST_FILES_PATH + profiles.get(0)[0]));
 
             // Create PDF output with OutputIntent
             IPDFOutput output = IPDFOutput.create(mako);
@@ -89,8 +91,8 @@ public class SaveWithOutputIntent {
 
             String subtype = "GTS_PDFX";
             String registryName = "http://www.color.org";
-            String outputCondition = profiles.getFirst()[0];
-            String outputConditionIdentifier = profiles.getFirst()[0];
+            String outputCondition = profiles.get(0)[0];
+            String outputConditionIdentifier = profiles.get(0)[0];
             String info = "Output Intent test";
 
             IOutputIntent outputIntent = IOutputIntent.create(mako, subtype,
@@ -144,7 +146,8 @@ public class SaveWithOutputIntent {
             System.out.println("Output intents successfully created and verified.");
 
         } catch (Exception e) {
-            System.out.println("Exception thrown: " + e);
+            System.err.println("Exception thrown: " + e);
+            System.exit(1);
         }
     }
 

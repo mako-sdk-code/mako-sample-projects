@@ -13,9 +13,9 @@
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class AddImageToPdf {
-    public static void main(String[] args) {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
 
-        var testFilepath = "TestFiles\\";
+    public static void main(String[] args) {
 
         var jawsMako = IJawsMako.create();
         var factory = jawsMako.getFactory();
@@ -29,7 +29,7 @@ public class AddImageToPdf {
         page.setContent(fixedPage);
 
         // Load image from file
-        var image = IDOMPNGImage.create(factory, IInputStream.createFromFile(factory,testFilepath + "makologo.png"));
+        var image = IDOMPNGImage.create(factory, IInputStream.createFromFile(factory,TEST_FILES_PATH + "makologo.png"));
 
         // Get image attributes
         var imageFrame = image.getImageFrame(factory);

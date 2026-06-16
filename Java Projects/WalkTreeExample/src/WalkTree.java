@@ -15,11 +15,12 @@ import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class WalkTree
 {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args)
     {
         try
         {
-            String testFilepath = "TestFiles/";
 
             // Instantiate Mako
             IJawsMako mako = IJawsMako.create();
@@ -27,7 +28,7 @@ public class WalkTree
 
             // Input
             IPDFInput pdfInput = IPDFInput.create(mako);
-            IDocumentAssembly assembly = pdfInput.open(testFilepath + "Cheshire Cat.pdf");
+            IDocumentAssembly assembly = pdfInput.open(TEST_FILES_PATH + "Cheshire Cat.pdf");
 
             IDOMFixedPage inFixedPage = assembly.getDocument().getPage(0).getContent();
 
@@ -37,7 +38,8 @@ public class WalkTree
         }
         catch (Exception e)
         {
-            System.out.printf("Exception thrown: %s%n", e.toString());
+            System.err.printf("Exception thrown: %s%n", e.toString());
+            System.exit(1);
         }
     }
 

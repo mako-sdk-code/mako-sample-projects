@@ -10,18 +10,20 @@
 #
 
 import sys
+import os
+from pathlib import Path
 import time
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
+
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) != 4:
         print("Usage: python insert_cover_page.py <input.pdf> <output.pdf> <cover.pdf>")
         return 1
-
-    test_file_path = "TestFiles/"
-    input_file = test_file_path + sys.argv[1]
+    input_file = TEST_FILES_PATH + sys.argv[1]
     output_file = sys.argv[2]
-    cover_file = test_file_path + sys.argv[3]
+    cover_file = TEST_FILES_PATH + sys.argv[3]
 
 
     try:

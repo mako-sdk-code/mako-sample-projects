@@ -17,9 +17,10 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class LayoutExample
 {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args)
     {
-        var testFilePath = "TestFiles/";
         var inputFile = args.length > 0 ? args[0] : "";
 
         try
@@ -105,7 +106,7 @@ public class LayoutExample
             if (!Objects.equals(inputFile, ""))
             {
                 double width = widthWithMargins / 3 * 2, height = 0;
-                var mountain = new GetImage(mako, testFilePath + inputFile, width, height);
+                var mountain = new GetImage(mako, TEST_FILES_PATH + inputFile, width, height);
                 paragraphs.getitem(paraIndex).addRun(ILayoutImageRun.create(mako, mountain.image, mountain.width, mountain.height));
             }
 
@@ -140,6 +141,7 @@ public class LayoutExample
 
         } catch (Exception e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 

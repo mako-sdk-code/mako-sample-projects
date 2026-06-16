@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="Program.cs" company="Hybrid Software Helix Ltd">
  *    Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
  *  </copyright>
@@ -11,50 +11,50 @@
  */
 
 using JawsMako;
-using static JawsMako.jawsmakoIF_csharp;
 
-namespace EncodePNGinMemory
+namespace AddImageToPdfCS;
+
+internal class AddImageToPdfCS
 {
-    internal class AddImageToPdfCS
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
+    static int Main()
     {
-        static int Main(string[] args)
+        try
         {
-            try
-            {
-                var testFilepath = @"..\..\..\..\TestFiles\";
+            using var mako = IJawsMako.create();
+            IJawsMako.enableAllFeatures(mako);
+            using var assembly = IDocumentAssembly.create(mako);
+            using var document = IDocument.create(mako);
+            assembly.appendDocument(document);
+            using var page = IPage.create(mako);
+            document.appendPage(page);
+            using var fixedPage = IDOMFixedPage.create(mako);
+            page.setContent(fixedPage);
 
-                var mako = IJawsMako.create();
-                IJawsMako.enableAllFeatures(mako);
-                var assembly = IDocumentAssembly.create(mako);
-                var document = IDocument.create(mako);
-                assembly.appendDocument(document);
-                var page = IPage.create(mako);
-                document.appendPage(page);
-                var fixedPage = IDOMFixedPage.create(mako);
-                page.setContent(fixedPage);
+            using var image = IDOMPNGImage.create(mako, IInputStream.createFromFile(mako, TestFilesPath + "Cheshire Cat.png"));
 
-                var image = IDOMPNGImage.create(mako, IInputStream.createFromFile(mako, testFilepath + "Cheshire Cat.png"));
+            // Get image attributes
+            using var imageFrame = image.getImageFrame(mako);
+            var width = imageFrame.getWidth();
+            var height = imageFrame.getHeight();
 
-                // Get image attributes
-                var imageFrame = image.getImageFrame(mako);
-                var width = imageFrame.getWidth();
-                var height = imageFrame.getHeight();
+            using var imageNode = IDOMPathNode.createImage(mako, image, new FRect(0.0, 0.0, width, height));
+            fixedPage.appendChild(imageNode);
 
-                var imageNode = IDOMPathNode.createImage(mako, image, new FRect(0.0, 0.0, width, height));
-                fixedPage.appendChild(imageNode);
-
-                IPDFOutput.create(mako).writeAssembly(assembly, IOutputStream.createToFile(mako, "test.pdf"));
-            }
-            catch (MakoException e)
-            {
-                Console.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception thrown: {e}");
-            }
-
-            return 0;
+            IPDFOutput.create(mako).writeAssembly(assembly, IOutputStream.createToFile(mako, "test.pdf"));
         }
+        catch (MakoException e)
+        {
+            Console.Error.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            return 1;
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"Exception thrown: {e}");
+            return 1;
+        }
+
+        return 0;
     }
 }

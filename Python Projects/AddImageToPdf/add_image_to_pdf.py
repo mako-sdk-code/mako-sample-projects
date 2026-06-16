@@ -11,8 +11,10 @@
  """
 
 import os
+from pathlib import Path
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 # Instantiate Mako
 jawsmako = IJawsMako.create("")
 IJawsMako.enableAllFeatures(jawsmako)
@@ -26,10 +28,8 @@ page = IPage.create(jawsmako)
 document.appendPage(page)
 fixedPage = IDOMFixedPage.create(factory)
 
-testFilepath = "TestFiles\\"
-
 # Load image from file
-image = IDOMPNGImage.create(factory, IInputStream.createFromFile(factory, testFilepath + "makologo.png"))
+image = IDOMPNGImage.create(factory, IInputStream.createFromFile(factory, TEST_FILES_PATH + "makologo.png"))
 
 # Get image attributes
 imageFrame = image.getImageFrame(factory)

@@ -11,6 +11,7 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
 
 #include <jawsmako/jawsmako.h>
@@ -21,25 +22,25 @@
 using namespace JawsMako;
 using namespace EDL;
 
-int main(int argc, char* argv[])
-{
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
 
-    U8String testFilePath = R"(..\..\TestFiles\)";
-    if (argc < 3)
+int main(const int argc, char* argv[])
+{
+    if (argc != 4)
     {
-        std::wcerr << "Usage: " << argv[0] << " <input> <output> <cover>" << std::endl;
-        return -1;
+        std::cerr << "Usage: " << argv[0] << " <input> <output> <cover>" << '\n';
+        return 1;
     }
 
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
+        IJawsMako::enableAllFeatures(mako);
 
         // Define input/output paths
-        const U8String fileThatNeedsACover = testFilePath + argv[1];
+        const U8String fileThatNeedsACover = TEST_FILES_PATH + argv[1];
         const U8String fileThatNowHasACover = argv[2];
-        const U8String coverPageFile = testFilePath + argv[3];
+        const U8String coverPageFile = TEST_FILES_PATH + argv[3];
         
         // Start timer
         auto start = std::chrono::high_resolution_clock::now();
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
         // Create inserter
         auto pageInserter = IPDFPageInserter::create(mako, inputStream);
 
-        // Do the insertion – page numbers are zero-based
+        // Do the insertion, page numbers are zero-based
         pageInserter->insert(insertStream, 0, 0, 1);
 
         // And save
@@ -62,19 +63,17 @@ int main(int argc, char* argv[])
         // Stop timer and report
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-        std::wcout << L"Processing time: " << (duration.count() / 1000.0) << L" seconds." << std::endl;
-
-        
+        std::wcout << L"Processing time: " << (duration.count() / 1000.0) << L" seconds." << '\n';
     }
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="GetPartialImage.cs" company="Hybrid Software Helix Ltd">
  *    Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
  *  </copyright>
@@ -12,31 +12,36 @@
 
 using JawsMako;
 
-namespace MakoPartialImage;
+namespace GetPartialImageCS;
 
 internal class GetPartialImageCS
 {
-    static void Main(string[] args)
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+
+    static int Main()
     {
         try
         {
-            var mako = IJawsMako.create();
+            using var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
-            var testFilePath = @"..\..\..\..\TestFiles\";
-            IDOMImage image = IDOMJPEGImage.create(mako,
-                IInputStream.createFromFile(mako, testFilePath + "WEV_086.JPG"));
+            using var image = IDOMJPEGImage.create(mako,
+                IInputStream.createFromFile(mako, TestFilesPath + "WEV_086.JPG"));
 
-            var partialImage = GetPartialImage(mako, image, new FRect(230, 230, 400, 250));
+            using var partialImage = GetPartialImage(mako, image, new FRect(230, 230, 400, 250));
             IDOMPNGImage.encode(mako, partialImage, IOutputStream.createToFile(mako, "JustTheKayak.png"));
         }
         catch (MakoException e)
         {
-            Console.WriteLine($"Mako exception thrown: {e.m_msg}");
+            Console.Error.WriteLine($"Mako exception thrown: {e.m_msg}");
+            return 1;
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception thrown: {e}");
+            Console.Error.WriteLine($"Exception thrown: {e}");
+            return 1;
         }
+
+        return 0;
     }
 
     /// <summary>
@@ -48,7 +53,7 @@ internal class GetPartialImageCS
     /// <param name="image"></param>
     /// <param name="subImageRect"></param>
     /// <returns>The resulting IDOMImage</returns>
-    static IDOMImage GetPartialImage(IJawsMako mako, IDOMImage image, FRect subImageRect)
+    private static IDOMImage GetPartialImage(IJawsMako mako, IDOMImage image, FRect subImageRect)
     {
         // Get some details of the original image
         var imageFrame = image.getImageFrame(mako);
@@ -67,20 +72,20 @@ internal class GetPartialImageCS
             bps = 16;
         }
 
-        var colorSpace = imageFrame.getColorSpace();
+        using var colorSpace = imageFrame.getColorSpace();
         var stride = imageFrame.getRawBytesPerRow();
         var bpp = imageFrame.getNumChannels() * bps / 8;
 
         // Check the requested area is within the bounds of the original
-        var originalImageRect = new FRect(0.0, 0.0, imageFrame.getWidth(), imageFrame.getHeight());
+        using var originalImageRect = new FRect(0.0, 0.0, imageFrame.getWidth(), imageFrame.getHeight());
         if (!originalImageRect.containsRect(subImageRect))
             return IDOMImage.Null();
 
         var (reader, writer) = mako.getTempStore().createTemporaryReaderWriterTuple();
-        IInputStream inStream = IInputStream.createFromLz4Compressed(mako, reader);
-        IOutputStream outStream = IOutputStream.createToLz4Compressed(mako, writer);
+        using var inStream = IInputStream.createFromLz4Compressed(mako, reader);
+        using var outStream = IOutputStream.createToLz4Compressed(mako, writer);
 
-        var imageAndWriter = IDOMRawImage.createWriterAndImage(
+        using var imageAndWriter = IDOMRawImage.createWriterAndImage(
             mako,
             colorSpace,
             (uint)subImageRect.dX,
@@ -92,7 +97,7 @@ internal class GetPartialImageCS
             inStream, outStream);
 
         var subImage = imageAndWriter.domImage;
-        var frameWriter = imageAndWriter.frameWriter;
+        using var frameWriter = imageAndWriter.frameWriter;
 
         imageAndWriter.domImage = null;
         imageAndWriter.frameWriter = null;

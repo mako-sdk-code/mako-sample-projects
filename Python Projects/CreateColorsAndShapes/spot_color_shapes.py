@@ -10,6 +10,8 @@
 # -----------------------------------------------------------------------
 
 import math
+import os
+import sys
 from jawsmakoIF_python import *
 
 
@@ -22,6 +24,15 @@ class ShapeType:
 
 
 def main():
+    if len(sys.argv) != 2:
+        print(f"Usage: python {sys.argv[0]} <icc-profile>", file=sys.stderr)
+        return 1
+
+    icc_profile_path = sys.argv[1]
+    if not os.path.exists(icc_profile_path):
+        print(f"ICC profile was not found: {icc_profile_path}", file=sys.stderr)
+        return 1
+
     try:
         # Instantiate Mako
         jaws_mako = IJawsMako.create("")
@@ -52,7 +63,7 @@ def main():
         iccBasedColorSpace = IDOMColorSpaceICCBased.create(
             factory, IDOMICCProfile.create(
                 factory, IInputStream.createFromFile(
-                    factory, "C:\\Windows\\System32\\spool\\drivers\\color\\WebCoatedFOGRA28.icc")))
+                    factory, icc_profile_path)))
 
         # Create a LAB color
         pantoneBlue072C_lab = IDOMColor.create(factory, labColorSpace, 1.0, 17.64, 43.0, -76.0)
@@ -138,6 +149,9 @@ def main():
 
     except Exception as e:
         print("Exception:", str(e))
+        return 1
+
+    return 0
 
 
 def draw_row(page, factory, origin, master_box_size, cyan, magenta, yellow, black, shape_type, sides=0, angle=0.0, lines=0):
@@ -209,4 +223,4 @@ def make_deviceN_color(factory, name, representation, alternate):
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

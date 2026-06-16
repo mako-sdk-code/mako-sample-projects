@@ -19,15 +19,15 @@
 using namespace JawsMako;
 using namespace EDL;
 
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
 int main()
 {
-
-    U8String testFilePath = R"(..\..\TestFiles\)";
 
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
+        IJawsMako::enableAllFeatures(mako);
         const auto assembly = IDocumentAssembly::create(mako);
         const auto document = IDocument::create(mako);
         assembly->appendDocument(document);
@@ -36,7 +36,7 @@ int main()
         const auto fixedPage = IDOMFixedPage::create(mako);
         page->setContent(fixedPage);
 
-        const auto image = IDOMPNGImage::create(mako, IInputStream::createFromFile(mako, testFilePath + "Cheshire Cat.png"));
+        const auto image = IDOMPNGImage::create(mako, IInputStream::createFromFile(mako, TEST_FILES_PATH + "Cheshire Cat.png"));
 
         // Get image attributes
         const IImageFramePtr imageFrame = image->getImageFrame(mako);
@@ -51,12 +51,12 @@ int main()
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

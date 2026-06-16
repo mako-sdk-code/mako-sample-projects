@@ -1,4 +1,4 @@
-﻿/* --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
  *  <copyright file="OverprintMethods.cs" company="Global Graphics Software Ltd">
  *    Copyright (c) 2025 Global Graphics Software Ltd. All rights reserved.
  *  </copyright>
@@ -12,37 +12,33 @@
 
 using JawsMako;
 
-namespace EncodePNGinMemory;
+namespace OverprintMethodsCS;
 
 internal class OverprintMethods
 {
-
+    private const string TestFilesPath = @"..\..\..\..\..\..\TestFiles\";
+    
     static int Main(string[] args)
     {
-        var testFilepath = @"..\..\..\..\TestFiles\";
-
         try
         {
             var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
-            using var assembly = IPDFInput.create(mako).open(testFilepath + "CMYK_Circles 1.pdf");
+            using var assembly = IPDFInput.create(mako).open(TestFilesPath + "CMYK_Circles 1.pdf");
             using var document = assembly.getDocument();
 
             for (uint pageIndex = 0; pageIndex < document.getNumPages(); ++pageIndex)
             {
-                IPage page = document.getPage(pageIndex);
-                IDOMFixedPage fixedPage = page.edit();
+                using var page = document.getPage(pageIndex);
+                using var fixedPage = page.edit();
 
-                var pathNodes = fixedPage.findChildrenOfType(eDOMNodeType.eDOMPathNode, true);
+                using var pathNodes = fixedPage.findChildrenOfType(eDOMNodeType.eDOMPathNode, true);
 
-                foreach (var node in pathNodes.toVector())
+                foreach (var node in pathNodes.toVector().Select(IDOMPathNode.fromRCObject))
                 {
-                    IDOMPathNode path = IDOMPathNode.fromRCObject(node);
-                    if (path != null)
-                    {
-                        path.setFillOverprints(true);
-                        path.setOverprintMode(true);
-                    }
+                    if (node == null) continue;
+                    node.setFillOverprints(true);
+                    node.setOverprintMode(true);
                 }
             }
 
@@ -50,11 +46,13 @@ internal class OverprintMethods
         }
         catch (MakoException e)
         {
-            Console.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            Console.Error.WriteLine($"Exception thrown: {e.m_errorCode}: {e.m_msg}");
+            return 1;
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception thrown: {e}");
+            Console.Error.WriteLine($"Exception thrown: {e}");
+            return 1;
         }
 
         return 0;

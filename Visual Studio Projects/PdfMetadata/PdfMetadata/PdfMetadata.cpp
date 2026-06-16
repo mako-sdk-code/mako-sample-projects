@@ -12,8 +12,11 @@
  */
 
 #include <iomanip>
+#include <filesystem>
 #include <iostream>
 #include <map>
+#include <ranges>
+#include <utility>
 
 #include <jawsmako/jawsmako.h>
 #include <edl/idommetadata.h>
@@ -23,11 +26,13 @@
 using namespace JawsMako;
 using namespace EDL;
 
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
+
 // Forward declarations
 namespace
 {
     uint32 readAllAvailable(const IInputStreamPtr& stream, uint8* ptr, uint32 size);
-    bool loadStreamIntoEDLSysString(const IInputStreamPtr& stream, EDLSysString& string);
+    bool loadStreamIntoEdlSysString(const IInputStreamPtr& stream, EDLSysString& string);
     std::map<EDLSysString, IDOMMetadata::eType> getMetadataFieldNames(const IDOMMetadataPtr& jobMetadata, enum IDOMMetadata::eType eType);
     std::map<EDLSysString, IDOMMetadata::eType> getAllMetadataFieldNames(const IDOMMetadataPtr& jobMetadata);
     String getMetadataValue(const IDOMMetadataPtr& jobMetadata, const EDLSysString& field, bool checkForValidFieldName = false);
@@ -36,13 +41,11 @@ namespace
 
 int main()
 {
-    U8String testFilePath = R"(..\..\TestFiles\)";
-
     try
     {
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
-        const auto assembly = IInput::create(mako, eFFPDF)->open(testFilePath + "metadata-10ner.pdf");
+        IJawsMako::enableAllFeatures(mako);
+        const auto assembly = IInput::create(mako, eFFPDF)->open(TEST_FILES_PATH + "metadata-10ner.pdf");
         auto metadata = assembly->getJobMetadata();
         if (metadata == nullptr)
         {
@@ -54,8 +57,7 @@ int main()
         // category, then proceeds to display their values
 
         // Document info
-        auto documentMetadata = getMetadataValues(metadata, IDOMMetadata::eDocumentInfo);
-        if (documentMetadata.size() > 0)
+        if (auto documentMetadata = getMetadataValues(metadata, IDOMMetadata::eDocumentInfo); documentMetadata.size() > 0)
         {
             std::wcout << L"\nDocument metadata:" << '\n';
             for (auto& [field, value] : documentMetadata)
@@ -63,8 +65,7 @@ int main()
         }
 
         // PDF info (these fields are readonly)
-        auto pdfMetadata = getMetadataValues(metadata, IDOMMetadata::ePDFInfo);
-        if (pdfMetadata.size() > 0)
+        if (auto pdfMetadata = getMetadataValues(metadata, IDOMMetadata::ePDFInfo); pdfMetadata.size() > 0)
         {
             std::wcout << L"\nPDF info metadata:" << '\n';
             for (auto& [field, value] : pdfMetadata)
@@ -72,8 +73,7 @@ int main()
         }
 
         // Viewer preferences
-        auto prefsMetadata = getMetadataValues(metadata, IDOMMetadata::eViewerPreferences);
-        if (prefsMetadata.size() > 0)
+        if (auto prefsMetadata = getMetadataValues(metadata, IDOMMetadata::eViewerPreferences); prefsMetadata.size() > 0)
         {
             std::wcout << L"\nViewer preferences metadata:" << '\n';
             for (auto& [field, value] : prefsMetadata)
@@ -81,8 +81,7 @@ int main()
         }
 
         // Page view preferences
-        auto pageViewMetadata = getMetadataValues(metadata, IDOMMetadata::ePageView);
-        if (pageViewMetadata.size() > 0)
+        if (auto pageViewMetadata = getMetadataValues(metadata, IDOMMetadata::ePageView); pageViewMetadata.size() > 0)
         {
             std::wcout << L"\nPage view preferences metadata:" << '\n';
             for (auto& [field, value] : pageViewMetadata)
@@ -91,12 +90,10 @@ int main()
 
         // XMP
         EDLSysString xmpPacket;
-        loadStreamIntoEDLSysString(edlobj2IRAInputStream(assembly->getXmpPacket()), xmpPacket);
+        loadStreamIntoEdlSysString(edlobj2IRAInputStream(assembly->getXmpPacket()), xmpPacket);
 
         // Parse XML
-        pugi::xml_document doc;
-        pugi::xml_parse_result result = doc.load_string(xmpPacket.c_str());
-        if (result)
+        if (pugi::xml_document doc; doc.load_string(xmpPacket.c_str()))
         {
             pugi::xml_node rdf = doc.child("x:xmpmeta").child("rdf:RDF").child("rdf:Description");
             std::cout << "\nXMP Packet" << '\n';
@@ -136,12 +133,12 @@ int main()
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 
@@ -171,7 +168,7 @@ namespace
     }
 
     // Function to load everything into a string
-    bool loadStreamIntoEDLSysString(const IInputStreamPtr& stream, EDLSysString& string)
+    bool loadStreamIntoEdlSysString(const IInputStreamPtr& stream, EDLSysString& string)
     {
         if (!stream)
             return false;
@@ -182,10 +179,9 @@ namespace
 
         // For the sake of efficiency, there are two paths here
         // If this is an RA input string, then we can find the size
-        IRAInputStreamPtr raStream = edlobj2IRAInputStream(stream);
-        if (raStream)
+        if (auto raStream = edlobj2IRAInputStream(stream))
         {
-            int64_t size = raStream->length();
+            auto size = raStream->length();
 
             // Check for sensible range
             if (size < 0 || size > 0x7fffffff)
@@ -196,7 +192,7 @@ namespace
             string.resize(static_cast<uint32_t>(size));
 
             // And read!
-            if (size && readAllAvailable(stream, reinterpret_cast<uint8_t*>(string.data()), static_cast<uint32_t>(size)) != size)
+            if (size && std::cmp_not_equal(readAllAvailable(stream, reinterpret_cast<uint8_t*>(string.data()), static_cast<uint32_t>(size)), size))
                 // Didn't get all we were expecting.
                 return false;
 
@@ -237,8 +233,7 @@ namespace
     std::map<EDLSysString, IDOMMetadata::eType> getMetadataFieldNames(const IDOMMetadataPtr& jobMetadata, enum IDOMMetadata::eType eType)
     {
         std::map<EDLSysString, IDOMMetadata::eType> fieldNames;
-        auto metadataFieldNames = jobMetadata->getPropertyCollectionEnum(eType);
-        if (metadataFieldNames)
+        if (auto metadataFieldNames = jobMetadata->getPropertyCollectionEnum(eType))
         {
             EDLSysString fieldName;
             for (uint32_t i = 0; i < metadataFieldNames->count(); i++)
@@ -269,7 +264,7 @@ namespace
         const auto allFieldNames = getAllMetadataFieldNames(jobMetadata);
         if (checkForValidFieldName)
         {
-            if (allFieldNames.find(field) == allFieldNames.end())
+            if (!allFieldNames.contains(field))
                 return L"Field name not recognized";
         }
 
@@ -309,8 +304,8 @@ namespace
         // Build map
         const auto fieldNames = getMetadataFieldNames(jobMetadata, eType);
         std::map<EDLSysString, String> returnList;
-        for (const auto& fieldName : fieldNames)
-            returnList.insert(std::make_pair(fieldName.first, getMetadataValue(jobMetadata, fieldName.first)));
+        for (const auto& key : fieldNames | std::views::keys)
+            returnList.insert(std::make_pair(key, getMetadataValue(jobMetadata, key)));
 
         return returnList;
     }

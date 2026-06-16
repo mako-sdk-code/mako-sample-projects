@@ -10,6 +10,7 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
 #include <jawsmako/jawsmako.h>
 #include <jawsmako/pdfinput.h>
@@ -17,13 +18,15 @@
 using namespace JawsMako;
 using namespace EDL;
 
-// Forward declaration
-bool VisitNode(void* priv, const IDOMNodePtr& node);
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
 
-void DumpNodeInfo(IDOMNodePtr node)
+// Forward declaration
+static bool VisitNode(void* priv, const IDOMNodePtr& node);
+
+static void DumpNodeInfo(IDOMNodePtr node)
 {
     // Indent according to depth in DOM tree
-    IDOMNodePtr p = node;
+    auto p = node;
     while (p->getParentNode() != nullptr)
     {
         std::cout << "  ";
@@ -32,27 +35,27 @@ void DumpNodeInfo(IDOMNodePtr node)
 
     switch (node->getNodeType())
     {
-    case eDOMNodeType::eDOMFixedPageNode:              std::cout << "eDOMFixedPageNode"; break;
-    case eDOMNodeType::eDOMGroupNode:                  std::cout << "eDOMGroupNode"; break;
-    case eDOMNodeType::eDOMCharPathGroupNode:          std::cout << "eDOMCharPathGroupNode"; break;
-    case eDOMNodeType::eDOMTransparencyGroupNode:      std::cout << "eDOMTransparencyGroupNode"; break;
-    case eDOMNodeType::eDOMGlyphsNode:                 std::cout << "eDOMGlyphsNode"; break;
-    case eDOMNodeType::eDOMPathNode:                   std::cout << "eDOMPathNode"; break;
-    case eDOMNodeType::eDOMFormNode:                   std::cout << "eDOMFormNode"; break;
-    case eDOMNodeType::eDOMFormInstanceNode:           std::cout << "eDOMFormInstanceNode"; break;
-    case eDOMNodeType::eDOMContentRootNode:            std::cout << "eDOMContentRootNode"; break;
-    case eDOMNodeType::eDOMDocumentSequenceNode:       std::cout << "eDOMDocumentSequenceNode"; break;
-    case eDOMNodeType::eDOMDocumentNode:               std::cout << "eDOMDocumentNode"; break;
-    case eDOMNodeType::eDOMFixedDocumentNode:          std::cout << "eDOMFixedDocumentNode"; break;
-    case eDOMNodeType::eDOMPageNode:                   std::cout << "eDOMPageNode"; break;
-    case eDOMNodeType::eDOMCanvasNode:                 std::cout << "eDOMCanvasNode"; break;
-    case eDOMNodeType::eDOMGlyphNode:                  std::cout << "eDOMGlyphNode"; break;
-    case eDOMNodeType::eDOMRefNode:                    std::cout << "eDOMRefNode"; break;
-    case eDOMNodeType::eDOMVisualRootNode:             std::cout << "eDOMVisualRootNode"; break;
+    case eDOMFixedPageNode:              std::cout << "eDOMFixedPageNode"; break;
+    case eDOMGroupNode:                  std::cout << "eDOMGroupNode"; break;
+    case eDOMCharPathGroupNode:          std::cout << "eDOMCharPathGroupNode"; break;
+    case eDOMTransparencyGroupNode:      std::cout << "eDOMTransparencyGroupNode"; break;
+    case eDOMGlyphsNode:                 std::cout << "eDOMGlyphsNode"; break;
+    case eDOMPathNode:                   std::cout << "eDOMPathNode"; break;
+    case eDOMFormNode:                   std::cout << "eDOMFormNode"; break;
+    case eDOMFormInstanceNode:           std::cout << "eDOMFormInstanceNode"; break;
+    case eDOMContentRootNode:            std::cout << "eDOMContentRootNode"; break;
+    case eDOMDocumentSequenceNode:       std::cout << "eDOMDocumentSequenceNode"; break;
+    case eDOMDocumentNode:               std::cout << "eDOMDocumentNode"; break;
+    case eDOMFixedDocumentNode:          std::cout << "eDOMFixedDocumentNode"; break;
+    case eDOMPageNode:                   std::cout << "eDOMPageNode"; break;
+    case eDOMCanvasNode:                 std::cout << "eDOMCanvasNode"; break;
+    case eDOMGlyphNode:                  std::cout << "eDOMGlyphNode"; break;
+    case eDOMRefNode:                    std::cout << "eDOMRefNode"; break;
+    case eDOMVisualRootNode:             std::cout << "eDOMVisualRootNode"; break;
     default:                                           std::cout << "Unknown node type"; break;
     }
 
-    std::cout << std::endl;
+    std::cout << '\n';
 }
 
 // The callback that will be passed to walkTree()
@@ -66,19 +69,17 @@ int main()
 {
     try
     {
-        U8String testFilepath = "../../TestFiles/";
-
         // Instantiate Mako
-        IJawsMakoPtr jawsMako = IJawsMako::create("", "");
+        auto jawsMako = IJawsMako::create("", "");
         IJawsMako::enableAllFeatures(jawsMako);
 
         // Open a PDF
-        IPDFInputPtr pdfInput = IPDFInput::create(jawsMako);
-        IDocumentAssemblyPtr assembly = pdfInput->open(testFilepath + "Cheshire Cat.pdf");
+        auto pdfInput = IPDFInput::create(jawsMako);
+        auto assembly = pdfInput->open(TEST_FILES_PATH + "Cheshire Cat.pdf");
 
-        // Get the first page’s fixed page content
-        IDocumentPtr document = assembly->getDocument();
-        IDOMFixedPagePtr fixedPage = document->getPage(0)->getContent();
+        // Get the first pages fixed page content
+        auto document = assembly->getDocument();
+        auto fixedPage = document->getPage()->getContent();
 
         // Walk the DOM tree
         fixedPage->walkTree(&VisitNode, nullptr, false, true);
@@ -86,12 +87,12 @@ int main()
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::cout << "std::exception: " << e.what() << std::endl;
+        std::cout << "std::exception: " << e.what() << '\n';
     }
 
     return 0;

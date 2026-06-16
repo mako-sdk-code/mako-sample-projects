@@ -37,11 +37,11 @@ IDOMNodePtr TextTransformImplementation::transformGlyphs(IImplementation* generi
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
     }
     return genericImplementation->transformGlyphs(nullptr, glyphs, changed, state);
 }

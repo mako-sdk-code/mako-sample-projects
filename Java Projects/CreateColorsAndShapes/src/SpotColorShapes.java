@@ -11,6 +11,7 @@
  */
 
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
+import java.io.File;
 import java.lang.Math;
 
 public class SpotColorShapes {
@@ -18,7 +19,17 @@ public class SpotColorShapes {
     enum ShapeType { Box, Ellipse, Hexagon, Polygon, Target }
 
     public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage: SpotColorShapes <icc-profile>");
+            System.exit(1);
+        }
+
         try {
+            var iccProfile = new File(args[0]);
+            if (!iccProfile.exists()) {
+                throw new IllegalArgumentException("ICC profile was not found: " + args[0]);
+            }
+
             var mako = IJawsMako.create();
             IJawsMako.enableAllFeatures(mako);
             var factory = mako.getFactory();
@@ -46,7 +57,7 @@ public class SpotColorShapes {
             var iccBasedColorSpace = IDOMColorSpaceICCBased.create(
                 factory, IDOMICCProfile.create(
                     factory, IInputStream.createFromFile(
-                        factory, "C:\\Windows\\System32\\spool\\drivers\\color\\WebCoatedFOGRA28.icc")));
+                        factory, iccProfile.getPath())));
 
             // Create a LAB color
             var pantoneBlue072C_lab = IDOMColor.create(factory, labColorSpace, 1.0, 17.64, 43.0, -76.0);
@@ -129,7 +140,8 @@ public class SpotColorShapes {
             pdf.writeAssembly(assembly, "test.pdf");
         }
         catch (Exception e) {
-            System.out.println("Exception: " + e.getMessage());
+            System.err.println("Exception: " + e.getMessage());
+            System.exit(1);
         }
     }
 

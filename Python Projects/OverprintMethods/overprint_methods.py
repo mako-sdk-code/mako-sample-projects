@@ -12,10 +12,13 @@
 #
 
 import sys
+import os
+from pathlib import Path
 from jawsmakoIF_python import *
 
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
+
 def main():
-    test_file_path = "TestFiles/"
 
     try:
         # Create the Mako instance
@@ -24,7 +27,7 @@ def main():
 
         # Open the input PDF
         file_input = IInput.create(mako, eFFPDF)
-        assembly = file_input.open(test_file_path + "CMYK_Circles 1.pdf")
+        assembly = file_input.open(TEST_FILES_PATH + "CMYK_Circles 1.pdf")
         document = assembly.getDocument()
 
         # Apply overprint to all path nodes in all pages

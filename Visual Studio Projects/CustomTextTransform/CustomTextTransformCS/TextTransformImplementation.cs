@@ -10,32 +10,25 @@
 
 using JawsMako;
 
-public class TextTransformImplementation : ICustomTransform.IImplementation
+namespace CustomTextTransformCS;
+
+public class TextTransformImplementation(IJawsMako mako, float textInkValue) : ICustomTransform.IImplementation
 {
-    private readonly IJawsMako m_mako;
-    private readonly float m_textInkValue;
-
-    public TextTransformImplementation(IJawsMako mako, float textInkValue)
-    {
-        m_mako = mako;
-        m_textInkValue = textInkValue;
-    }
-
     public override IDOMNode transformGlyphs(ICustomTransform.IImplementation genericImplementation, IDOMGlyphs glyphs, ref bool changed, CTransformState state)
     {
         try
         {
-            var fill = glyphs.getFill();
+            using var fill = glyphs.getFill();
             if (fill.getBrushType() != IDOMBrush.eBrushType.eSolidColor)
                 return genericImplementation.transformGlyphs(null, glyphs, ref changed, state);
 
-            var colorBrush = IDOMSolidColorBrush.fromRCObject(fill);
-            var color = colorBrush.getColor();
+            using var colorBrush = IDOMSolidColorBrush.fromRCObject(fill);
+            using var color = colorBrush.getColor();
 
-            if (color.getColorSpace().equals(IDOMColorSpaceDeviceCMYK.create(m_mako)) &&
+            if (color.getColorSpace().equals(IDOMColorSpaceDeviceCMYK.create(mako)) &&
                 Math.Abs(color.getComponentValue(3) - 1.0f) < 0.0001f)
             {
-                var newBrush = IDOMSolidColorBrush.createSolidCmyk(m_mako, 0.0f, 0.0f, 0.0f, m_textInkValue);
+                using var newBrush = IDOMSolidColorBrush.createSolidCmyk(mako, 0.0f, 0.0f, 0.0f, textInkValue);
                 glyphs.setFill(newBrush);
                 changed = true;
                 return glyphs;
@@ -43,7 +36,6 @@ public class TextTransformImplementation : ICustomTransform.IImplementation
         }
         catch (MakoException e)
         {
-            string errorFormatString = jawsmakoIF_csharp.getEDLErrorString(e.m_errorCode);
             Console.Error.WriteLine($"Exception thrown: {e.m_msg}");
         }
         catch (Exception e)
@@ -54,4 +46,3 @@ public class TextTransformImplementation : ICustomTransform.IImplementation
         return genericImplementation.transformGlyphs(null, glyphs, ref changed, state);
     }
 }
-

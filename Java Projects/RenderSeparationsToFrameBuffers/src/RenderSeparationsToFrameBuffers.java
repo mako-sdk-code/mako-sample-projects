@@ -18,13 +18,14 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class RenderSeparationsToFrameBuffers {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args) {
         try {
-            String testFilePath = "TestFiles/";
 
-            if (args.length < 4) {
-                System.out.println("Usage: java RenderSeparationsToFrameBuffers <source file> <spots to retain> <spots to ignore> <framebuffers=true/false>");
-                return;
+            if (args.length != 4) {
+                System.err.println("Usage: java RenderSeparationsToFrameBuffers <source file> <spots to retain> <spots to ignore> <framebuffers=true/false>");
+                System.exit(1);
             }
 
             String inputFile = args[0];
@@ -43,7 +44,7 @@ public class RenderSeparationsToFrameBuffers {
 
             // Input
             IPDFInput pdfInput = IPDFInput.create(mako);
-            IDocumentAssembly assembly = pdfInput.open(testFilePath + inputFile);
+            IDocumentAssembly assembly = pdfInput.open(TEST_FILES_PATH + inputFile);
             IPage page = assembly.getDocument().getPage();
             IDOMFixedPage fixedPage = page.getContent();
 
@@ -165,7 +166,7 @@ public class RenderSeparationsToFrameBuffers {
                             IDOMTIFFImage.eTIFFPrediction.eTPNone,
                             eImageExtraChannelType.eIECNone,
                             false,
-                            IInputStream.createFromFile(factory, testFilePath + inputFile),
+                            IInputStream.createFromFile(factory, TEST_FILES_PATH + inputFile),
                             IOutputStream.createToFile(factory, tiffFileName)
                     );
 
@@ -185,6 +186,7 @@ public class RenderSeparationsToFrameBuffers {
 
         } catch (Exception e) {
             System.err.println("Exception: " + e.getMessage());
+            System.exit(1);
         }
     }
 }

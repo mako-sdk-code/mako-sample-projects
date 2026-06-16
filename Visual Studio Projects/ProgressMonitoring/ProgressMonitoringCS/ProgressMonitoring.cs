@@ -10,263 +10,260 @@
  * -----------------------------------------------------------------------
  */
 
-using System;
 using JawsMako;
-using static JawsMako.jawsmakoIF_csharp;
 
-namespace ProgressMonitoring
+namespace ProgressMonitoringCS;
+
+class ConverterParams
 {
-    class ConverterParams
+    public string InputFilePath { get; private set; }
+    public eFileFormat InputFileFormat { get; private set; }
+
+    public string OutputFilePath { get; private set; }
+    public eFileFormat OutputFileFormat { get; private set; }
+
+    public IProgressMonitor CustomTransformProgressMonitor { get; set; }
+    public IProgressMonitor TransformProgressMonitor { get; set; }
+    public IProgressMonitor TransformChainProgressMonitor { get; set; }
+
+    public void SetInputPath(string path)
     {
-        public string InputFilePath { get; private set; }
-        public eFileFormat InputFileFormat { get; private set; }
-
-        public string OutputFilePath { get; private set; }
-        public eFileFormat OutputFileFormat { get; private set; }
-
-        public IProgressMonitor CustomTransformProgressMonitor { get; set; }
-        public IProgressMonitor TransformProgressMonitor { get; set; }
-        public IProgressMonitor TransformChainProgressMonitor { get; set; }
-
-        public void SetInputPath(string path)
-        {
-            InputFilePath = path;
-            InputFileFormat = FormatFromPath(path);
-        }
-
-        public void SetOutputPath(string path)
-        {
-            OutputFilePath = path;
-            OutputFileFormat = FormatFromPath(path);
-        }
-
-        static eFileFormat FormatFromPath(string path)
-        {
-            string ext = System.IO.Path.GetExtension(path).ToLower();
-            return ext switch
-            {
-                ".xps" => eFileFormat.eFFXPS,
-                ".pdf" => eFileFormat.eFFPDF,
-                ".svg" => eFileFormat.eFFSVG,
-                ".ps" => eFileFormat.eFFPS,
-                ".eps" => eFileFormat.eFFEPS,
-                ".pcl" => eFileFormat.eFFPCL5,
-                ".pxl" => eFileFormat.eFFPCLXL,
-                ".ijp" => eFileFormat.eFFIJPDS,
-                ".zip" => eFileFormat.eFFPPML,
-                ".oxps" => eFileFormat.eFFOXPS,
-                _ => throw new ArgumentException($"Unsupported file type: {path}")
-            };
-        }
+        InputFilePath = path;
+        InputFileFormat = FormatFromPath(path);
     }
 
-    class ProgressHandler : IProgressTickIntCallback
+    public void SetOutputPath(string path)
     {
-        private readonly string info;
-        private int tickCount;
-
-        public IProgressTick ProgressTick { get; private set; }
-
-        public ProgressHandler(string info)
-        {
-            this.info = info;
-            tickCount = 0;
-            ProgressTick = IProgressTick.create(this.getCallbackFunc(), this.getPriv());
-        }
-
-        public override void tick(uint currentCount, uint maxCount)
-        {
-            tickCount++;
-            Console.WriteLine($"{info} : {tickCount}");
-        }
+        OutputFilePath = path;
+        OutputFileFormat = FormatFromPath(path);
     }
 
-    class ProgressEventHandler : IProgressEventHandlerCallback
+    private static eFileFormat FormatFromPath(string path)
     {
-        private int m_pageCount;
-        private int m_nodeCount;
-        private int m_nodeDepth;
-        private readonly Stack<int> m_nodes = new Stack<int>();
-
-        public ProgressEventHandler()
+        var ext = Path.GetExtension(path).ToLower();
+        return ext switch
         {
-            m_pageCount = 0;
-            m_nodeCount = 0;
-            m_nodeDepth = 0;
-        }
+            ".xps" => eFileFormat.eFFXPS,
+            ".pdf" => eFileFormat.eFFPDF,
+            ".svg" => eFileFormat.eFFSVG,
+            ".ps" => eFileFormat.eFFPS,
+            ".eps" => eFileFormat.eFFEPS,
+            ".pcl" => eFileFormat.eFFPCL5,
+            ".pxl" => eFileFormat.eFFPCLXL,
+            ".ijp" => eFileFormat.eFFIJPDS,
+            ".zip" => eFileFormat.eFFPPML,
+            ".oxps" => eFileFormat.eFFOXPS,
+            _ => throw new ArgumentException($"Unsupported file type: {path}")
+        };
+    }
+}
 
-        public override void handleEvent(IProgressEventHandler.Event evt)
+internal class ProgressHandler : IProgressTickIntCallback
+{
+    private readonly string info;
+    private int tickCount;
+
+    public IProgressTick ProgressTick { get; private set; }
+
+    public ProgressHandler(string info)
+    {
+        this.info = info;
+        tickCount = 0;
+        ProgressTick = IProgressTick.create(this.getCallbackFunc(), this.getPriv());
+    }
+
+    public override void tick(uint currentCount, uint maxCount)
+    {
+        tickCount++;
+        Console.WriteLine($"{info} : {tickCount}");
+    }
+}
+
+internal class ProgressEventHandler : IProgressEventHandlerCallback
+{
+    private int m_pageCount;
+    private int m_nodeCount;
+    private int m_nodeDepth;
+    private readonly Stack<int> m_nodes = new();
+
+    private ProgressEventHandler()
+    {
+        m_pageCount = 0;
+        m_nodeCount = 0;
+        m_nodeDepth = 0;
+    }
+
+    public override void handleEvent(IProgressEventHandler.Event evt)
+    {
+        int id;
+
+        switch (evt)
         {
-            int id;
+            case IProgressEventHandler.Event.eEvtPageWriteStart:
+                m_pageCount++;
+                m_nodeCount = 0;
+                m_nodeDepth = 0;
+                m_nodes.Clear();
+                Console.WriteLine($"start of page {m_pageCount}");
+                break;
 
-            switch (evt)
-            {
-                case IProgressEventHandler.Event.eEvtPageWriteStart:
-                    m_pageCount++;
-                    m_nodeCount = 0;
-                    m_nodeDepth = 0;
-                    m_nodes.Clear();
-                    Console.WriteLine($"start of page {m_pageCount}");
-                    break;
+            case IProgressEventHandler.Event.eEvtPageWriteEnd:
+                Console.WriteLine($"end of page {m_pageCount}, got {m_nodeCount} node events");
+                if (m_nodeDepth != 0)
+                    Console.WriteLine($"mismatch in node write start/end {m_nodeDepth}");
+                break;
 
-                case IProgressEventHandler.Event.eEvtPageWriteEnd:
-                    Console.WriteLine($"end of page {m_pageCount}, got {m_nodeCount} node events");
-                    if (m_nodeDepth != 0)
-                        Console.WriteLine($"mismatch in node write start/end {m_nodeDepth}");
-                    break;
+            case IProgressEventHandler.Event.eEvtNodeWriteStart:
+                id = ++m_nodeCount;
+                m_nodeDepth++;
+                m_nodes.Push(id);
+                if (id % 500 == 0)
+                    Console.WriteLine($"start of node {id}");
+                break;
 
-                case IProgressEventHandler.Event.eEvtNodeWriteStart:
-                    id = ++m_nodeCount;
-                    m_nodeDepth++;
-                    m_nodes.Push(id);
+            case IProgressEventHandler.Event.eEvtNodeWriteEnd:
+                m_nodeDepth--;
+                if (m_nodes.Count == 0)
+                {
+                    Console.WriteLine("mismatch, empty nodes");
+                }
+                else
+                {
+                    id = m_nodes.Pop();
                     if (id % 500 == 0)
-                        Console.WriteLine($"start of node {id}");
-                    break;
+                        Console.WriteLine($"end of node {id}");
+                }
+                break;
 
-                case IProgressEventHandler.Event.eEvtNodeWriteEnd:
-                    m_nodeDepth--;
-                    if (m_nodes.Count == 0)
-                    {
-                        Console.WriteLine("mismatch, empty nodes");
-                    }
-                    else
-                    {
-                        id = m_nodes.Pop();
-                        if (id % 500 == 0)
-                            Console.WriteLine($"end of node {id}");
-                    }
-                    break;
-
-                default:
-                    break;
-            }
+            case IProgressEventHandler.Event.eEvtNone:
+            default:
+                break;
         }
-
-        public static ProgressEventHandler Create()
-        {
-            var handler = new ProgressEventHandler();
-            handler.ProgressEvent = IProgressEventHandler.create(handler.getCallbackFunc(), handler.getPriv());
-            return handler;
-        }
-
-        public IProgressEventHandler ProgressEvent { get; private set; }
     }
 
-    class EmptyTransformImplementation : ICustomTransform.IImplementation
+    public static ProgressEventHandler Create()
     {
-        private IJawsMako jawsMako;
-        public EmptyTransformImplementation(IJawsMako jm) => jawsMako = jm;
+        var handler = new ProgressEventHandler();
+        handler.ProgressEvent = IProgressEventHandler.create(handler.getCallbackFunc(), handler.getPriv());
+        return handler;
     }
 
-    class ProgressMonitoring
+    public IProgressEventHandler ProgressEvent { get; private set; }
+}
+
+internal class EmptyTransformImplementation(IJawsMako jm) : ICustomTransform.IImplementation
+{
+    private IJawsMako jawsMako = jm;
+}
+
+internal class ProgressMonitoring
+{
+    private static void OutputIterateByPage(ConverterParams cvtParams, IJawsMako jawsMako, IDocumentAssembly assembly, IOutput output)
     {
-        static void OutputIterateByPage(ConverterParams cvtParams, IJawsMako jawsMako, IDocumentAssembly assembly, IOutput output)
+        using var tempStore = jawsMako.getTempStore();
+        using var pair = tempStore.createTemporaryReaderWriterPair();
+        using var reader = pair.inputStream;
+        using var writer = pair.outputStream;
+        using var writerHandle = output.openWriter(assembly, writer);
+
+        // Create transforms
+        using var customImpl = new EmptyTransformImplementation(jawsMako);
+        using var customTransform = ICustomTransform.create(jawsMako, customImpl);
+        customTransform.setProgressMonitor(cvtParams.CustomTransformProgressMonitor);
+
+        using var ccTransform = IColorConverterTransform.create(jawsMako);
+        using var deviceCmyk = IDOMColorSpaceDeviceCMYK.create(jawsMako);
+        ccTransform.setTargetSpace(deviceCmyk);
+        ccTransform.setProgressMonitor(cvtParams.TransformProgressMonitor);
+
+        using var transformChain = ITransformChain.create(jawsMako, cvtParams.TransformChainProgressMonitor);
+        using var colorConverter = IColorConverterTransform.create(jawsMako);
+        transformChain.pushTransform(colorConverter);
+
+        for (uint docNo = 0; assembly.documentExists(docNo); docNo++)
         {
-            var tempStore = jawsMako.getTempStore();
-            var pair = tempStore.createTemporaryReaderWriterPair();
-            IRAInputStream reader = pair.inputStream;
-            IRAOutputStream writer = pair.outputStream;
-            var writerHandle = output.openWriter(assembly, writer);
+            using var document = assembly.getDocument(docNo);
+            writerHandle.beginDocument(document);
 
-            // Create transforms
-            var customImpl = new EmptyTransformImplementation(jawsMako);
-            var customTransform = ICustomTransform.create(jawsMako, customImpl);
-            customTransform.setProgressMonitor(cvtParams.CustomTransformProgressMonitor);
-
-            var ccTransform = IColorConverterTransform.create(jawsMako);
-            var deviceCmyk = IDOMColorSpaceDeviceCMYK.create(jawsMako);
-            ccTransform.setTargetSpace(deviceCmyk);
-            ccTransform.setProgressMonitor(cvtParams.TransformProgressMonitor);
-
-            var transformChain = ITransformChain.create(jawsMako, cvtParams.TransformChainProgressMonitor);
-            var colorConverter = IColorConverterTransform.create(jawsMako);
-            transformChain.pushTransform(colorConverter);
-
-            for (uint docNo = 0; assembly.documentExists(docNo); docNo++)
+            uint maxPages = 1;
+            for (uint pageIndex = 0; pageIndex < maxPages; pageIndex++)
             {
-                var document = assembly.getDocument(docNo);
-                writerHandle.beginDocument(document);
+                using var page = document.getPage(pageIndex);
+                using var fixedPage = page.getContent();
 
-                uint maxPages = 1;
-                for (uint pageIndex = 0; pageIndex < maxPages; pageIndex++)
-                {
-                    var page = document.getPage(pageIndex);
-                    var fixedPage = page.getContent();
+                // Progress monitor tests
+                customTransform.transformPage(page);
 
-                    // Progress monitor tests
-                    customTransform.transformPage(page);
+                var changed = false;
+                ccTransform.transform(fixedPage, ref changed);
+                transformChain.transform(fixedPage, ref changed);
 
-                    bool changed = false;
-                    ccTransform.transform(fixedPage, ref changed);
-                    transformChain.transform(fixedPage, ref changed);
-
-                    writerHandle.writePage(page);
-                    page.release();
-                }
-
-                writerHandle.endDocument();
+                writerHandle.writePage(page);
+                page.release();
             }
 
-            writerHandle.finish();
-            IOutputStream.copy(reader, IOutputStream.createToFile(jawsMako, cvtParams.OutputFilePath));
+            writerHandle.endDocument();
         }
 
-        static void Usage(string progName) =>
-            Console.WriteLine($"{progName} <input> <output>");
+        writerHandle.finish();
+        IOutputStream.copy(reader, IOutputStream.createToFile(jawsMako, cvtParams.OutputFilePath));
+    }
 
-        static int Main(string[] args)
+    private static void Usage(string progName) =>
+        Console.WriteLine($"{progName} <input> <output>");
+
+    static int Main(string[] args)
+    {
+        try
         {
-            try
+            if (args.Length != 2)
             {
-                if (args.Length != 2)
-                {
-                    Usage(AppDomain.CurrentDomain.FriendlyName);
-                    return 1;
-                }
-
-                var cvtParams = new ConverterParams();
-                cvtParams.SetInputPath(args[0]);
-                cvtParams.SetOutputPath(args[1]);
-
-                var jawsMako = IJawsMako.create();
-                IJawsMako.enableAllFeatures(jawsMako);
-
-                var inputHandler = new ProgressHandler("input");
-                var customHandler = new ProgressHandler("customtransform");
-                var transformHandler = new ProgressHandler("transform");
-                var chainHandler = new ProgressHandler("transformchain");
-
-                // Use a ProgressEventHandler for the output to get more detailed information
-                var outputHandler = ProgressEventHandler.Create();
-
-                var abort = IAbort.create();
-                cvtParams.CustomTransformProgressMonitor = IProgressMonitor.create(customHandler.ProgressTick, abort);
-                cvtParams.TransformProgressMonitor = IProgressMonitor.create(transformHandler.ProgressTick, abort);
-                cvtParams.TransformChainProgressMonitor = IProgressMonitor.create(chainHandler.ProgressTick, abort);
-
-                var inputProgressMonitor = IProgressMonitor.create(inputHandler.ProgressTick, abort);
-                var input = IInput.create(jawsMako, cvtParams.InputFileFormat, inputProgressMonitor);
-
-                // Set ProgressEventHandler for output progress monitor
-                var outputProgressMonitor = IProgressMonitor.create(abort);
-                outputProgressMonitor.setProgressEventHandler(outputHandler.ProgressEvent);
-                var output = IOutput.create(jawsMako, cvtParams.OutputFileFormat, outputProgressMonitor);
-                
-                var assembly = input.open(cvtParams.InputFilePath);
-
-                OutputIterateByPage(cvtParams, jawsMako, assembly, output);
-            }
-            catch (MakoException e)
-            {
-                Console.WriteLine($"MakoException: {e.m_msg}");
-                return (int)e.m_errorCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception: {ex.Message}");
+                Usage(AppDomain.CurrentDomain.FriendlyName);
                 return 1;
             }
-            return 0;
+
+            var cvtParams = new ConverterParams();
+            cvtParams.SetInputPath(args[0]);
+            cvtParams.SetOutputPath(args[1]);
+
+            using var jawsMako = IJawsMako.create();
+            IJawsMako.enableAllFeatures(jawsMako);
+
+            using var inputHandler = new ProgressHandler("input");
+            using var customHandler = new ProgressHandler("customtransform");
+            using var transformHandler = new ProgressHandler("transform");
+            using var chainHandler = new ProgressHandler("transformchain");
+
+            // Use a ProgressEventHandler for the output to get more detailed information
+            using var outputHandler = ProgressEventHandler.Create();
+
+            using var abort = IAbort.create();
+            cvtParams.CustomTransformProgressMonitor = IProgressMonitor.create(customHandler.ProgressTick, abort);
+            cvtParams.TransformProgressMonitor = IProgressMonitor.create(transformHandler.ProgressTick, abort);
+            cvtParams.TransformChainProgressMonitor = IProgressMonitor.create(chainHandler.ProgressTick, abort);
+
+            using var inputProgressMonitor = IProgressMonitor.create(inputHandler.ProgressTick, abort);
+            using var input = IInput.create(jawsMako, cvtParams.InputFileFormat, inputProgressMonitor);
+
+            // Set ProgressEventHandler for output progress monitor
+            using var outputProgressMonitor = IProgressMonitor.create(abort);
+            outputProgressMonitor.setProgressEventHandler(outputHandler.ProgressEvent);
+            using var output = IOutput.create(jawsMako, cvtParams.OutputFileFormat, outputProgressMonitor);
+                
+            using var assembly = input.open(cvtParams.InputFilePath);
+
+            OutputIterateByPage(cvtParams, jawsMako, assembly, output);
         }
+        catch (MakoException e)
+        {
+            Console.WriteLine($"MakoException: {e.m_msg}");
+            return (int)e.m_errorCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            return 1;
+        }
+        return 0;
     }
 }

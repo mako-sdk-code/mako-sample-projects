@@ -11,11 +11,14 @@
 import com.globalgraphics.JawsMako.jawsmakoIF.*;
 
 public class InsertCoverPage {
+    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+
     public static void main(String[] args) {
         try {
 
-            if (args.length < 3) {
+            if (args.length != 3) {
                 System.err.println("Usage: InsertCoverPage <input> <output> <cover>");
+                System.exit(1);
             }
 
             // Start stopwatch
@@ -27,10 +30,9 @@ public class InsertCoverPage {
             var factory = jawsMako.getFactory();
 
             // Define file paths
-            String testFilePath = "TestFiles/";
-            String fileThatNeedsACover = testFilePath + args[0];
+            String fileThatNeedsACover = TEST_FILES_PATH + args[0];
             String fileThatNowHasACover = args[1];
-            String coverPageFile = testFilePath + args[2];
+            String coverPageFile = TEST_FILES_PATH + args[2];
 
 
             // File we want to insert into
@@ -56,6 +58,7 @@ public class InsertCoverPage {
         }
         catch (Exception e) {
             System.err.println("Unexpected exception: " + e);
+            System.exit(1);
         }
     }
 }

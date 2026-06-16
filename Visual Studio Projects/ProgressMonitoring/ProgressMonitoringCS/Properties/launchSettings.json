@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "ProgressMonitoringCS": {
-      "commandName": "Project",
-      "commandLineArgs": "\"..\\..\\..\\..\\TestFiles\\000001_00001_00001.pdf\" \"output.pdf\""
-    }
-  }
-}

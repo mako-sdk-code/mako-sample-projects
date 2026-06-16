@@ -12,11 +12,16 @@
 # </summary>
 # -----------------------------------------------------------------------
 
+import sys
+import os
+from pathlib import Path
+
 from jawsmakoIF_python import *
+
+TEST_FILES_PATH = str(Path(__file__).resolve().parents[2] / "TestFiles") + os.sep
 
 def main():
     try:
-        test_filepath = "TestFiles/"
 
         # Instantiate Mako
         jaws_mako = IJawsMako.create("")
@@ -29,7 +34,7 @@ def main():
 
         # Load an image from disk
         image = IDOMPNGImage.create(jaws_mako.getFactory(),
-                                         IInputStream.createFromFile(jaws_mako.getFactory(), test_filepath + "Cheshire Cat.png"))
+                                         IInputStream.createFromFile(jaws_mako.getFactory(), TEST_FILES_PATH + "Cheshire Cat.png"))
 
         # Get image details
         image_frame = image.getImageFrame(jaws_mako.getFactory())
@@ -83,8 +88,12 @@ def main():
 
     except MakoException as e:
         print(f"Exception thrown: {e.m_errorCode}: {e.m_msg}")
+        return 1
     except Exception as e:
         print(f"Exception thrown: {e}")
+        return 1
+
+    return 0
 
 
 def make_separation_color(jaws_mako, name, lab_representation):
@@ -112,4 +121,4 @@ def make_cmyk_separation_color(jaws_mako, name, cmyk_representation):
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -1,4 +1,3 @@
-
 /* -----------------------------------------------------------------------
  * <copyright file="OptionalContentSearch.cpp" company="Hybrid Software Helix Ltd">
  *  Copyright (c) 2025 Hybrid Software Helix Ltd. All rights reserved.
@@ -11,12 +10,15 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
 #include <jawsmako/jawsmako.h>
 #include <jawsmako/pdfinput.h>
 #include <jawsmako/customtransform.h>
 
 using namespace JawsMako;
+
+const U8String TEST_FILES_PATH = R"(..\..\..\..\TestFiles\)";
 
 // In Mako, optional content is marked up either by IDOMGroup objects or annotations.
 // Here we will check groups.
@@ -38,17 +40,13 @@ public:
         return m_foundGroups;
     }
 
-    IDOMNodePtr transformGroup(IImplementation* genericImplementation, const IDOMGroupPtr& group, bool& changed, bool transformChildren, const CTransformState& state)
+    IDOMNodePtr transformGroup(IImplementation* genericImplementation, const IDOMGroupPtr& group, bool& changed, bool transformChildren, const CTransformState& state) override
     {
         // Does this group have optional content information?
-        const IOptionalContentDetailsPtr details = group->getOptionalContentDetails();
-        if (details)
+        if (const IOptionalContentDetailsPtr details = group->getOptionalContentDetails())
         {
-            // What groups does this reference?
-            COptionalContentGroupReferenceVect referencedGroups = details->getGroupReferences();
-
             // Unfortunately for now we need to laboriously check to see if we've seen this before
-            for (const IOptionalContentGroupReferencePtr& referencedGroup : referencedGroups)
+            for (auto referencedGroups = details->getGroupReferences(); const IOptionalContentGroupReferencePtr& referencedGroup : referencedGroups)
             {
                 bool found = false;
                 for (const IOptionalContentGroupReferencePtr& foundGroup : m_foundGroups)
@@ -82,23 +80,27 @@ private:
  */
 int main(const int argc, const char* argv[])
 {
-    U8String testFilePath = R"(..\..\TestFiles\)";
+    if (argc != 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input.pdf>" << '\n';
+        return 1;
+    }
 
     try
     {
         const IJawsMakoPtr mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
-        const auto document = IPDFInput::create(mako)->open(testFilePath + argv[1])->getDocument();
+        IJawsMako::enableAllFeatures(mako);
+        const auto document = IPDFInput::create(mako)->open(TEST_FILES_PATH + argv[1])->getDocument();
         const auto optionalContent = document->getOptionalContent();
 
         // Create a custom transform to do our searching
         COptionalContentSearchImplementation optionalContentSearchImplementation;
-        const ICustomTransformPtr optionalContentSearchTransform = ICustomTransform::create(mako, &optionalContentSearchImplementation);
+        const auto optionalContentSearchTransform = ICustomTransform::create(mako, &optionalContentSearchImplementation);
 
 
         for (uint32 pageIndex = 0; pageIndex < document->getNumPages(); pageIndex++)
         {
-            std::cout << "Page " << pageIndex + 1 << ":" << std::endl;
+            std::cout << "Page " << pageIndex + 1 << ":" << '\n';
 
             // What groups does page 1 reference?
             {
@@ -110,16 +112,15 @@ int main(const int argc, const char* argv[])
                 // clean up duplicated resources which could cause an edit.
                 optionalContentSearchImplementation.reset();
                 optionalContentSearchTransform->flushCaches();
-                optionalContentSearchTransform->transformPage(document->getPage()->clone());
+                optionalContentSearchTransform->transformPage(document->getPage(pageIndex)->clone());
 
                 // So what groups do we have?
-                COptionalContentGroupReferenceVect foundGroups = optionalContentSearchImplementation.getFoundGroups();
-                for (const IOptionalContentGroupReferencePtr& foundGroup : foundGroups)
+                for (auto foundGroups = optionalContentSearchImplementation.getFoundGroups(); const IOptionalContentGroupReferencePtr& foundGroup : foundGroups)
                 {
-                    IOptionalContentGroupPtr group = optionalContent->getGroup(foundGroup);
+                    auto group = optionalContent->getGroup(foundGroup);
 
                     // This group is present - do something with this information
-                    std::cout << "Found group: " << group->getName() << std::endl;
+                    std::cout << "Found group: " << group->getName() << '\n';
                 }
             }
         }
@@ -127,12 +128,12 @@ int main(const int argc, const char* argv[])
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Mako exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Mako exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return 1;
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 

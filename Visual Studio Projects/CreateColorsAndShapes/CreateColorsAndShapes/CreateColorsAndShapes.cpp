@@ -10,7 +10,9 @@
  * -----------------------------------------------------------------------
  */
 
+#include <filesystem>
 #include <iostream>
+#include <stdexcept>
 #include <jawsmako/jawsmako.h>
 #include <jawsmako/pdfoutput.h>
 #include <edl/idomcolorspace.h>
@@ -19,16 +21,26 @@
 using namespace JawsMako;
 using namespace EDL;
 
-IDOMPathGeometryPtr createHexagon(const IJawsMakoPtr& mako, FRect box, double rotation = 0);
-IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, FRect box, double nLines, double rotation);
-IDOMColorPtr MakeDeviceNColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, IDOMColorSpacePtr alternateSpace);
+static IDOMPathGeometryPtr createHexagon(const IJawsMakoPtr& mako, const FRect& box, double rotation = 0);
+static IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, const FRect& box, double nLines, double rotation);
+static IDOMColorPtr MakeDeviceNColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, const IDOMColorSpacePtr& alternateSpace);
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <icc-profile>" << '\n';
+        return 1;
+    }
+
     try
     {
+        const auto iccProfilePath = std::filesystem::path(argv[1]);
+        if (!std::filesystem::exists(iccProfilePath))
+	        throw std::runtime_error("ICC profile was not found: " + iccProfilePath.string());
+
         const auto mako = IJawsMako::create();
-        mako->enableAllFeatures(mako);
+        IJawsMako::enableAllFeatures(mako);
         const auto assembly = IDocumentAssembly::create(mako);
         const auto document = IDocument::create(mako);
         assembly->appendDocument(document);
@@ -50,9 +62,9 @@ int main()
 
         // Create a device CMYK colorspace from an ICC profile
         const auto iccBasedColorSpace = IDOMColorSpaceICCBased::create(
-             mako, IDOMICCProfile::create(
+            mako, IDOMICCProfile::create(
                 mako, IInputStream::createFromFile(
-                    mako, R"(C:\Windows\System32\spool\drivers\color\WebCoatedFOGRA28.icc)")));
+                    mako, iccProfilePath.string().c_str())));
         
         // Create an LAB color
         const auto pantoneBlue072C_lab = IDOMColor::create(mako, labColorSpace, 1.0, 17.64, 43.0, -76.0);
@@ -115,7 +127,7 @@ int main()
         start.x += boxSize.x;
         
         // Draw a border in All
-        const uint32 strokeWidth = 20;
+        constexpr uint32 strokeWidth = 20;
         box = FRect(origin.x - strokeWidth / 2.0, origin.y - strokeWidth / 2.0, (boxSize.x * 7) + strokeWidth, boxSize.y + strokeWidth);
         fixedPage->appendChild(IDOMPathNode::createStroked(mako, IDOMPathGeometry::create(mako, box), allBrush, FMatrix(),
             IDOMPathGeometryPtr(), strokeWidth));
@@ -273,24 +285,24 @@ int main()
     catch (IError& e)
     {
         const String errorFormatString = getEDLErrorString(e.getErrorCode());
-        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << std::endl;
+        std::wcerr << L"Exception thrown: " << e.getErrorDescription(errorFormatString) << '\n';
         return static_cast<int>(e.getErrorCode());
     }
     catch (std::exception& e)
     {
-        std::wcerr << L"std::exception thrown: " << e.what() << std::endl;
+        std::wcerr << L"std::exception thrown: " << e.what() << '\n';
         return 1;
     }
 
     return 0;
 }
 
-IDOMPathGeometryPtr createHexagon(const IJawsMakoPtr& mako, FRect box, double rotation)
+IDOMPathGeometryPtr createHexagon(const IJawsMakoPtr& mako, const FRect& box, const double rotation)
 {
     return IDOMPathGeometry::createPolygon(mako, box, 6, rotation);
 }
 
-IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, FRect box, double nLines, double rotation)
+IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, const FRect& box, const double nLines, const double rotation)
 {
     double angle = rotation * (PI / 180.0);
     const double incr = 2.0 * PI / nLines;
@@ -304,11 +316,10 @@ IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, FRect box, double nLi
     const auto center = FPoint(centerX, centerY);
     geometryBuilder->moveTo(center);
 
-    double endX = 0.0, endY = 0.0;
     for (int i = 0; i < nLines; i++)
     {
-        endX = centerX + radiusX * cos(angle);
-        endY = centerY + radiusY * sin(angle);
+        double endX = centerX + radiusX * cos(angle);
+        double endY = centerY + radiusY * sin(angle);
         geometryBuilder->lineTo(FPoint(endX, endY));
         geometryBuilder->moveTo(center);
         angle += incr;
@@ -317,7 +328,7 @@ IDOMPathGeometryPtr createTarget(const IJawsMakoPtr& mako, FRect box, double nLi
     return geometryBuilder->createGeometry(mako, IDOMPathGeometry::eFRNonZero);
 }
 
-IDOMColorPtr MakeDeviceNColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, IDOMColorSpacePtr alternateSpace)
+IDOMColorPtr MakeDeviceNColor(const IJawsMakoPtr& mako, const U8String& name, const CDoubleVect& representation, const IDOMColorSpacePtr& alternateSpace)
 {
     // Create a vector of colorants with one entry
     auto colorants = IDOMColorSpaceDeviceN::CColorantInfoVect();
