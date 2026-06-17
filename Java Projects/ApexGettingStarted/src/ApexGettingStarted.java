@@ -14,7 +14,7 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class ApexGettingStarted {
-    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+    private static final String TEST_FILES_PATH = "..\\..\\TestFiles\\";
 
     public static void main(String[] args) {
         try {
@@ -52,9 +52,9 @@ public class ApexGettingStarted {
             // Fetch the result and encode in an image
             IDOMImage image = imageRenderSpec.getResult();
             IDOMPNGImage.encode(jawsMako, image,
-                    IOutputStream.createToFile(jawsMako.getFactory(), TEST_FILES_PATH + "Cheshire Cat.png"));
+                    IOutputStream.createToFile(jawsMako.getFactory(), "Cheshire Cat.png"));
 
-            System.out.println("Render complete. Output written to " + TEST_FILES_PATH + "Cheshire Cat.png");
+            System.out.println("Render complete. Output written to " + "Cheshire Cat.png");
         }
         catch (Exception e) {
             System.err.println("Exception thrown: " + e.getMessage());

@@ -88,7 +88,8 @@ int main(int argc, char* argv[])
             
             for (uint32 j = 0; j < componentNames.size(); j++)
             {
-                auto tiffFileName = std::format("{0}_regular_{1}.tif", inputFile.substr(0, inputFile.size() - 4), componentNames[j]).c_str();
+                const auto formattedFileName = std::format("{0}_regular_{1}.tif", inputFile.substr(0, inputFile.size() - 4), componentNames[j]);
+                const U8String tiffFileName(formattedFileName.c_str());
                 IDOMTIFFImage::encode(mako, images[j], IOutputStream::createToFile(mako, tiffFileName));
             }
         }
@@ -113,14 +114,15 @@ int main(int argc, char* argv[])
             for (uint32 j = 0; j < numComponents; j++)
             {
                 IImageFrameWriterPtr frame;
-                auto tiffFileName = std::format("{0}_frameBuffer_{1}.tif", inputFile.substr(0, inputFile.size() - 4), componentNames[j]).c_str();
+                const auto formattedFileName = std::format("{0}_frameBuffer_{1}.tif", inputFile.substr(0, inputFile.size() - 4), componentNames[j]);
+                const U8String tiffFileName(formattedFileName.c_str());
                 (void)IDOMTIFFImage::createWriterAndImage(mako, frame, IDOMColorSpaceDeviceGray::create(mako),
                     pixelWidth, pixelHeight,
                     depth, 96.0, 96.0,
                     IDOMTIFFImage::eTCAuto,
                     IDOMTIFFImage::eTPNone,
                     eIECNone, false,
-                    IInputStream::createFromFile(mako, tiffFileName),
+                    IInputStream::createFromFile(mako, TEST_FILES_PATH + inputFile),
                     IOutputStream::createToFile(mako, tiffFileName));
 
                 for (uint32 y = 0; y < pixelHeight; y++)

@@ -433,3 +433,4 @@ Testing/
 TestFiles/
 Visual Studio Projects/CreateColorsAndShapes/CreateColorsAndShapesCS/Properties/launchSettings.json
 Visual Studio Projects/ProgressMonitoring/ProgressMonitoringCS/Properties/launchSettings.json
+Visual Studio Projects/ILayoutExample/ILayoutExampleCS/Properties/launchSettings.json

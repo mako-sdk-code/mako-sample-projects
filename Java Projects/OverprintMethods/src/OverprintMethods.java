@@ -14,7 +14,7 @@ import com.globalgraphics.JawsMako.jawsmakoIF.*;
 import com.globalgraphics.JawsMako.jawsmakoIF.jawsmakoIF.*;
 
 public class OverprintMethods {
-    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+    private static final String TEST_FILES_PATH = "..\\..\\TestFiles\\";
 
 
     public static void main(String[] args) {

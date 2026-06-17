@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SaveWithOutputIntent {
-    private static final String TEST_FILES_PATH = "TestFiles" + java.io.File.separator;
+    private static final String TEST_FILES_PATH = "..\\..\\TestFiles\\";
 
 
     public static void main(String[] args) {
